@@ -8,9 +8,12 @@ interface Props {
   model: string | null
   defaultModel: string
   onModel: (m: string | null) => void
+  mock: boolean
+  onMock: (m: boolean) => void
+  showMock: boolean
 }
 
-export function UnderTheHood({ open, onClose, history, model, defaultModel, onModel }: Props) {
+export function UnderTheHood({ open, onClose, history, model, defaultModel, onModel, mock, onMock, showMock }: Props) {
   const last = history.at(-1)
   const total = history.reduce((s, u) => s + u.cost_usd, 0)
   const prompt = last ? last.input_tokens + last.cache_read_tokens + last.cache_write_tokens : 0
@@ -47,6 +50,16 @@ export function UnderTheHood({ open, onClose, history, model, defaultModel, onMo
               {model ? `Next answers use ${modelLabel(model)}.` : `Backend default: ${modelLabel(defaultModel)}.`}
             </p>
           </section>
+
+          {showMock && (
+            <label className="flex items-start gap-3 rounded-xl bg-white/[0.035] border border-white/[0.06] p-3 cursor-pointer">
+              <input type="checkbox" checked={mock} onChange={(e) => onMock(e.target.checked)} className="mt-0.5 accent-[var(--accent)]" />
+              <span className="text-sm">
+                Mock answers
+                <span className="block text-[11px] text-zinc-500">Demo fallback: the backend returns the fixture answer (?mock=1) instead of calling the model.</span>
+              </span>
+            </label>
+          )}
 
           {!last ? (
             <p className="text-sm text-zinc-500">Ask a question to see tokens, cache hits, cost and latency.</p>

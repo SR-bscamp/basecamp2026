@@ -85,20 +85,25 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
-export async function getChecklist(dept: Dept, role: string): Promise<Checklist> {
+/** "Support analyst" → "support-analyst" (the contract uses lowercase role ids, e.g. role=analyst). */
+export const roleId = (role: string) => role.trim().toLowerCase().replace(/\s+/g, '-')
+
+export async function getChecklist(dept: Dept, role: string, sessionId: string): Promise<Checklist> {
   if (USE_FIXTURE) {
     await delay(250)
-    return fixtureChecklist(dept, role)
+    return fixtureChecklist(dept, roleId(role))
   }
-  return request<Checklist>(`/api/checklist?dept=${dept}&role=${encodeURIComponent(role)}`)
+  const q = new URLSearchParams({ dept, role: roleId(role), session_id: sessionId })
+  return request<Checklist>(`/api/checklist?${q}`)
 }
 
-export async function postChat(body: ChatRequest): Promise<ChatResponse> {
+/** mock=true asks the backend for the fixture answer (?mock=1): the demo fallback when the model is unavailable. */
+export async function postChat(body: ChatRequest, mock = false): Promise<ChatResponse> {
   if (USE_FIXTURE) {
     await delay(900 + Math.random() * 600)
     return structuredClone(chatFixture) as ChatResponse
   }
-  return request<ChatResponse>('/api/chat', {
+  return request<ChatResponse>(`/api/chat${mock ? '?mock=1' : ''}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -113,7 +118,10 @@ export async function getEvals(): Promise<EvalResults> {
   return request<EvalResults>('/api/evals/latest')
 }
 
-export async function getHealth(): Promise<{ ok: boolean; model: string }> {
+/** `live` and `docs` are backend additions (CONTRACT.md, "Additions from the backend"). */
+export interface Health { ok: boolean; model: string; live?: boolean; docs?: number }
+
+export async function getHealth(): Promise<Health> {
   if (USE_FIXTURE) return { ok: true, model: chatFixture.usage.model }
   return request('/api/health')
 }

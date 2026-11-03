@@ -4,11 +4,20 @@ import { Ring } from './Ring'
 
 interface Props {
   checklist: ChecklistT | null
+  error?: string | null
+  onRetry?: () => void
   onToggle: (id: string) => void
   flash: Set<string> // ids just ticked by the agent
 }
 
-export function Checklist({ checklist, onToggle, flash }: Props) {
+export function Checklist({ checklist, error, onRetry, onToggle, flash }: Props) {
+  if (error) return (
+    <div className="card p-6 text-center">
+      <p className="text-sm text-zinc-300 mb-1">Couldn't load your checklist</p>
+      <p className="text-xs text-zinc-500 mb-4">{error}</p>
+      <button onClick={onRetry} className="text-sm rounded-lg px-4 py-2 bg-accent text-zinc-950 font-medium hover:brightness-110">Retry</button>
+    </div>
+  )
   if (!checklist) return <ChecklistSkeleton />
   const all = checklist.groups.flatMap((g) => g.items)
   const done = all.filter((i) => i.done).length
@@ -41,7 +50,7 @@ export function Checklist({ checklist, onToggle, flash }: Props) {
   )
 }
 
-function Group({ group, onToggle, flash }: { group: ChecklistT['groups'][number] } & Omit<Props, 'checklist'>) {
+function Group({ group, onToggle, flash }: { group: ChecklistT['groups'][number] } & Pick<Props, 'onToggle' | 'flash'>) {
   const complete = group.items.length > 0 && group.items.every((i) => i.done)
   const was = useRef(complete)
   const [celebrate, setCelebrate] = useState(false)
