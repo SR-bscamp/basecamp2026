@@ -16,6 +16,8 @@ class Ctx:
     role: str
     checklist_updates: list = field(default_factory=list)
     ticket: dict | None = None
+    tool_calls: list = field(default_factory=list)  # trace of non-terminal tool calls
+    last_ok: bool = True  # whether the most recent tool call succeeded / found something
 
 
 TOOL_SPECS = [
@@ -93,6 +95,7 @@ def execute(name: str, args: dict, ctx: Ctx) -> str:
     if name == "lookup_booking_code":
         q = str(args.get("query", ""))
         rows = [r for r in k.booking_codes if _match(q, r.get("code"), r.get("client"), r.get("project"), r.get("notes"))]
+        ctx.last_ok = bool(rows)
         if not rows:
             return json.dumps({"found": False, "message": f"No booking code matches '{q}'. Do not guess a code."})
         return json.dumps({"found": True, "matches": rows})
@@ -100,6 +103,7 @@ def execute(name: str, args: dict, ctx: Ctx) -> str:
         item_id = str(args.get("item_id", ""))
         valid = {i["id"] for by_role in k.checklists.values() for data in by_role.values()
                  for g in data["groups"] for i in g["items"]}
+        ctx.last_ok = item_id in valid
         if item_id not in valid:
             return json.dumps({"ok": False, "error": f"Unknown checklist item '{item_id}'."})
         ctx.session.done.add(item_id)
@@ -108,9 +112,12 @@ def execute(name: str, args: dict, ctx: Ctx) -> str:
     if name == "find_contact":
         topic = str(args.get("topic", ""))
         rows = [c for c in k.contacts if _match(topic, c.get("topic"), c.get("team"))]
+        ctx.last_ok = bool(rows)
         return json.dumps({"found": bool(rows), "contacts": rows})
     if name == "create_ticket":
         queue = args.get("queue") if args.get("queue") in ("IT", "HR") else "IT"
         ctx.ticket = ctx.store.create_ticket(ctx.session_id, queue, str(args.get("summary", "")).strip())
+        ctx.last_ok = True
         return json.dumps({"ok": True, "ticket": ctx.ticket})
+    ctx.last_ok = False
     return json.dumps({"error": f"Unknown tool '{name}'."})

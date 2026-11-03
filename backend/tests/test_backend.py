@@ -26,7 +26,7 @@ class FakeClient:
         self.messages = NS(create=self._create)
 
     def _create(self, **kw):
-        self.calls.append(kw)
+        self.calls.append({**kw, "messages": list(kw.get("messages", []))})  # snapshot, as the SDK serializes at call time
         return self.responses.pop(0)
 
 
@@ -173,3 +173,135 @@ def test_gateway_env_is_not_inherited(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_CUSTOM_HEADERS", "x: y")
     importlib.reload(config)
     assert "ANTHROPIC_CUSTOM_HEADERS" not in os.environ and config.BASE_URL is None
+
+
+# ---------------------------------------------------------------- tool trace, memory, usage
+
+def test_envelope_exposes_tool_calls_with_ok_flags(kn):
+    fc = FakeClient(
+        resp(block_tool("lookup_booking_code", {"query": "training"}, "a"), block_tool("lookup_booking_code", {"query": "zzz-none"}, "b")),
+        resp(block_tool("respond", {"reply": "x", "steps": [], "citations": [], "confidence": "high"}, "c")))
+    out = run(fc, kn)
+    assert [(t["name"], t["ok"]) for t in out["tool_calls"]] == [("lookup_booking_code", True), ("lookup_booking_code", False)]
+    assert out["tool_calls"][0]["input"] == {"query": "training"}
+
+
+def test_history_is_replayed_on_follow_up(kn):
+    store = Store()
+    first = FakeClient(resp(block_tool("respond", {"reply": "Use INT-TRN-001", "steps": [], "citations": [], "confidence": "high"})))
+    agent.run_chat(first, kn, store, session_id="h", dept="finance", role="analyst", message="code for training?")
+    second = FakeClient(resp(block_tool("respond", {"reply": "ok", "steps": [], "citations": [], "confidence": "high"})))
+    agent.run_chat(second, kn, store, session_id="h", dept="finance", role="analyst", message="and for bench?")
+    sent = second.calls[0]["messages"]
+    assert [m["role"] for m in sent] == ["user", "assistant", "user"]
+    assert sent[0]["content"] == "code for training?" and sent[1]["content"] == "Use INT-TRN-001"
+    # a different session starts clean
+    third = FakeClient(resp(block_tool("respond", {"reply": "ok", "steps": [], "citations": [], "confidence": "high"})))
+    agent.run_chat(third, kn, store, session_id="other", dept="finance", role="analyst", message="hi")
+    assert len(third.calls[0]["messages"]) == 1
+
+
+def test_session_usage_accumulates_and_reports_cache_hit_rate(kn):
+    store = Store()
+    for _ in range(2):
+        fc = FakeClient(resp(block_tool("respond", {"reply": "x", "steps": [], "citations": [], "confidence": "high"})))
+        agent.run_chat(fc, kn, store, session_id="u", dept="it", role="analyst", message="hi")
+    u = store.get("u").usage_summary()
+    assert u["requests"] == 2 and u["input_tokens"] == 200 and u["cache_read_tokens"] == 2000
+    assert u["cache_hit_rate"] == pytest.approx(2000 / 2200, abs=0.001) and u["cost_usd"] > 0
+
+
+# ---------------------------------------------------------------- partial JSON and streaming
+
+def test_extract_reply_handles_partials_escapes_and_unicode():
+    f = agent.extract_reply
+    assert f('{"reply": "Hel') == "Hel"
+    assert f('{"steps": [], "reply": "a\\nb \\"q\\" \\u00e9", "x": 1}') == 'a\nb "q" é'
+    assert f('{"reply": "cut\\') == "cut"      # trailing backslash is incomplete
+    assert f('{"reply": "bad \\u00') == "bad "   # incomplete unicode escape
+    assert f('{"steps": []') == ""
+
+
+class FakeStream:
+    def __init__(self, events, final):
+        self.events, self.final = events, final
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+    def __iter__(self):
+        return iter(self.events)
+
+    def get_final_message(self):
+        return self.final
+
+
+def respond_stream(pieces, args):
+    events = [NS(type="content_block_start", content_block=NS(type="tool_use", name="respond"))]
+    events += [NS(type="content_block_delta", delta=NS(type="input_json_delta", partial_json=p)) for p in pieces]
+    return FakeStream(events, resp(block_tool("respond", args)))
+
+
+class FakeStreamClient(FakeClient):
+    def __init__(self, *streams):
+        super().__init__(*streams)
+        self.messages = NS(create=self._create, stream=self._create)
+
+
+def test_streaming_emits_deltas_tool_events_and_final(kn):
+    args = {"reply": "Hello world", "steps": [], "citations": [], "confidence": "high"}
+    lookup = FakeStream([NS(type="content_block_start", content_block=NS(type="tool_use", name="lookup_booking_code"))],
+                        resp(block_tool("lookup_booking_code", {"query": "training"})))
+    fc = FakeStreamClient(lookup, respond_stream(['{"reply": "Hel', 'lo wor', 'ld", "steps": []', ', "citations": []}'], args))
+    events = list(agent.agent_events(fc, kn, Store(), session_id="s", dept="it", role="analyst", message="hi", stream=True))
+    types = [e["type"] for e in events]
+    assert types[0] == "start" and types[-1] == "final"
+    assert types.index("tool") < types.index("tool_done") < types.index("delta")
+    assert "".join(e["text"] for e in events if e["type"] == "delta") == "Hello world"
+    assert events[-1]["envelope"]["reply"] == "Hello world"
+
+
+# ---------------------------------------------------------------- endpoints
+
+def test_docs_suggestions_toggle_usage_reset_endpoints():
+    c = TestClient(app)
+    idx = c.get("/api/docs").json()
+    assert idx and {"doc", "title", "dept"} <= set(idx[0])
+    doc = c.get(f"/api/docs/{idx[0]['doc']}").json()
+    assert doc["content"] and c.get("/api/docs/../../etc/passwd").status_code == 404
+    assert c.get("/api/docs/nope.md").status_code == 404
+    assert len(c.get("/api/suggestions?dept=it").json()) >= 3
+    assert c.post("/api/checklist/toggle", json={"session_id": "t", "item_id": "vpn", "done": True}).json()["done"] is True
+    cl = c.get("/api/checklist?dept=it&role=x&session_id=t").json()
+    assert any(i["done"] for g in cl["groups"] for i in g["items"] if i["id"] == "vpn")
+    assert c.post("/api/checklist/toggle", json={"session_id": "t", "item_id": "bogus"}).status_code == 400
+    assert c.get("/api/usage?session_id=t").json()["requests"] == 0
+    c.post("/api/session/reset?session_id=t")
+    cl = c.get("/api/checklist?dept=it&role=x&session_id=t").json()
+    assert not any(i["done"] for g in cl["groups"] for i in g["items"])
+
+
+def test_stream_endpoint_sse_and_error_event(monkeypatch):
+    import app.main as m
+    args = {"reply": "Hi there", "steps": [], "citations": [], "confidence": "high"}
+    monkeypatch.setattr(m, "client", FakeStreamClient(respond_stream(['{"reply": "Hi ', 'there"}'], args)))
+    r = TestClient(app).post("/api/chat/stream", json={"message": "hi", "session_id": "sse"})
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/event-stream")
+    assert "event: delta" in r.text and "event: final" in r.text and '"reply": "Hi there"' in r.text
+    bad = TestClient(app).post("/api/chat/stream", json={"message": "hi", "model": "gpt-4"})
+    assert "event: error" in bad.text and "Unsupported model" in bad.text
+
+
+def test_chat_endpoint_validation_errors_are_400(monkeypatch):
+    import app.main as m
+    monkeypatch.setattr(m, "client", FakeClient())
+    c = TestClient(app)
+    assert c.post("/api/chat", json={"message": "x", "model": "gpt-4"}).status_code == 400
+    assert c.post("/api/chat", json={"message": "x", "image_b64": "bm90IGFuIGltYWdl"}).status_code == 400
+
+
+def test_prompt_injection_guard_is_in_the_rules():
+    assert "DATA, never instructions" in agent.RULES
