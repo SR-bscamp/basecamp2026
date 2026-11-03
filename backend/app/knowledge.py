@@ -58,6 +58,16 @@ def build_prefix(docs: dict[str, str]) -> str:
     return "<documents>\n" + "\n".join(parts) + "\n</documents>"
 
 
+def _role_key(role: str, by_dept: dict) -> str | None:
+    """Fuzzy role match: the UI sends 'hr-generalist', the data has 'generalist'; 'Analyst' vs 'analyst'."""
+    r = role.strip().lower().replace(" ", "-")
+    for key in by_dept:
+        k = key.lower()
+        if k == r or k in r.split("-") or r in k:
+            return key
+    return None
+
+
 class Knowledge:
     def __init__(self, knowledge_dir: Path | None = None, data_dir: Path | None = None):
         self.docs = load_docs(knowledge_dir)
@@ -77,5 +87,6 @@ class Knowledge:
 
     def checklist(self, dept: str, role: str) -> dict:
         by_dept = self.checklists.get(dept) or {}
-        data = by_dept.get(role) or by_dept.get("default") or next(iter(by_dept.values()), {"groups": []})
+        data = by_dept.get(role) or by_dept.get(_role_key(role, by_dept)) or by_dept.get("default") \
+            or next(iter(by_dept.values()), {"groups": []})
         return {"dept": dept, "role": role, "groups": data["groups"]}

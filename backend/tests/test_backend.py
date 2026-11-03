@@ -427,3 +427,13 @@ def test_variant_through_the_http_api(monkeypatch):
 def test_demo_page_is_served():
     r = TestClient(app).get("/demo/")
     assert r.status_code == 200 and "Compass" in r.text and "/api/evals/latest" in r.text
+
+
+def test_ui_role_names_map_to_checklist_roles():
+    k = Knowledge.__new__(Knowledge)
+    k.checklists = {"hr": {"generalist": {"groups": [{"id": "G"}]}, "recruiter": {"groups": [{"id": "R"}]}},
+                    "it": {"engineer": {"groups": [{"id": "E"}]}, "helpdesk": {"groups": [{"id": "H"}]}}}
+    assert k.checklist("hr", "hr-generalist")["groups"][0]["id"] == "G"
+    assert k.checklist("hr", "Recruiter")["groups"][0]["id"] == "R"
+    assert k.checklist("it", "engineer")["groups"][0]["id"] == "E"
+    assert k.checklist("it", "totally-unknown")["groups"][0]["id"] == "E"  # falls back to the first role
