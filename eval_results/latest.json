@@ -1,25 +1,60 @@
 {
-  "_fixture": true,
-  "_note": "SAMPLE DATA. Illustrative numbers so the Quality tab can be built. Lane C's eval runner (ticket C5) overwrites this file with real results. The UI must show a 'sample data' badge while _fixture is true.",
-  "generated_at": "2026-01-01T00:00:00Z",
-  "model": "claude-haiku-4-5",
-  "runs": 1,
+  "generated_at": "2026-11-03T23:25:21Z",
+  "model": "claude-haiku-5-5",
+  "runs": 3,
   "model_comparison": [
-    { "model": "claude-haiku-5-5", "pass_rate": 0.88, "avg_cost_usd": 0.0003, "p50_latency_ms": 1100 },
-    { "model": "claude-haiku-4-5", "pass_rate": 0.9, "avg_cost_usd": 0.0012, "p50_latency_ms": 1500 },
-    { "model": "claude-sonnet-5-5", "pass_rate": 0.94, "avg_cost_usd": 0.0045, "p50_latency_ms": 2300 },
-    { "model": "claude-opus-5-5", "pass_rate": 0.96, "avg_cost_usd": 0.009, "p50_latency_ms": 3400 }
+    {
+      "model": "claude-haiku-5-5",
+      "pass_rate": 0.8571,
+      "avg_cost_usd": 0.000663,
+      "p50_latency_ms": 3114
+    },
+    {
+      "model": "claude-haiku-4-5",
+      "pass_rate": 0.5714,
+      "avg_cost_usd": 0.005321,
+      "p50_latency_ms": 3684
+    },
+    {
+      "model": "claude-sonnet-5-5",
+      "pass_rate": 0.8095,
+      "avg_cost_usd": 0.012185,
+      "p50_latency_ms": 3966
+    },
+    {
+      "model": "claude-opus-5-5",
+      "pass_rate": 0.8254,
+      "avg_cost_usd": 0.028753,
+      "p50_latency_ms": 7278
+    }
   ],
   "variants": [
-    { "label": "naive prompt", "pass_rate": 0.5 },
-    { "label": "final prompt", "pass_rate": 0.92 },
-    { "label": "deliberately bad", "pass_rate": 0.17 }
+    {
+      "label": "final prompt",
+      "pass_rate": 0.8571
+    }
   ],
   "by_department": [
-    { "dept": "it", "passed": 3, "total": 3 },
-    { "dept": "hr", "passed": 3, "total": 3 },
-    { "dept": "consultants", "passed": 2, "total": 3 },
-    { "dept": "finance", "passed": 3, "total": 3 }
+    {
+      "dept": "finance",
+      "passed": 6,
+      "total": 7
+    },
+    {
+      "dept": "it",
+      "passed": 3,
+      "total": 5
+    },
+    {
+      "dept": "hr",
+      "passed": 4,
+      "total": 4
+    },
+    {
+      "dept": "consultants",
+      "passed": 5,
+      "total": 5
+    }
   ],
   "tasks": [
     {
@@ -28,8 +63,62 @@
       "pass_rate": 1.0,
       "flaky": false,
       "checks": [
-        { "type": "tool_used", "pass": true, "reason": "lookup_booking_code was called" },
-        { "type": "response_contains", "pass": true, "reason": "Found 'INT-TRN-001'" }
+        {
+          "type": "tool_used",
+          "pass": true,
+          "reason": "lookup_booking_code was called"
+        },
+        {
+          "type": "response_contains",
+          "pass": true,
+          "reason": "Found all of ['INT-TRN-001']"
+        },
+        {
+          "type": "response_not_contains",
+          "pass": true,
+          "reason": "none of the forbidden strings present"
+        }
+      ]
+    },
+    {
+      "id": "bc_bench",
+      "dept": "finance",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "response_contains",
+          "pass": true,
+          "reason": "Found all of ['INT-BEN-001']"
+        },
+        {
+          "type": "tool_not_used",
+          "pass": true,
+          "reason": "create_ticket was not called"
+        }
+      ]
+    },
+    {
+      "id": "bc_client_bluepeak",
+      "dept": "finance",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "tool_used",
+          "pass": true,
+          "reason": "lookup_booking_code was called"
+        },
+        {
+          "type": "response_contains",
+          "pass": true,
+          "reason": "Found all of ['CLI-BLU-2402']"
+        },
+        {
+          "type": "response_contains_any",
+          "pass": true,
+          "reason": "Found 'billable'"
+        }
       ]
     },
     {
@@ -38,9 +127,402 @@
       "pass_rate": 1.0,
       "flaky": false,
       "checks": [
-        { "type": "response_not_contains", "pass": true, "reason": "no invented code in reply" }
+        {
+          "type": "tool_used",
+          "pass": true,
+          "reason": "lookup_booking_code was called"
+        },
+        {
+          "type": "response_not_contains",
+          "pass": true,
+          "reason": "none of the forbidden strings present"
+        },
+        {
+          "type": "response_contains_any",
+          "pass": true,
+          "reason": "Found 'no code'"
+        }
+      ]
+    },
+    {
+      "id": "it_vpn_809",
+      "dept": "it",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "response_contains",
+          "pass": true,
+          "reason": "Found all of ['NW-Gateway-Alt']"
+        },
+        {
+          "type": "tool_not_used",
+          "pass": true,
+          "reason": "create_ticket was not called"
+        }
+      ]
+    },
+    {
+      "id": "it_mfa_deadline",
+      "dept": "it",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "response_contains",
+          "pass": true,
+          "reason": "Found all of ['24 hours']"
+        },
+        {
+          "type": "tool_not_used",
+          "pass": true,
+          "reason": "create_ticket was not called"
+        }
+      ]
+    },
+    {
+      "id": "hr_benefits_deadline",
+      "dept": "hr",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "response_contains_any",
+          "pass": true,
+          "reason": "Found '30 calendar days'"
+        },
+        {
+          "type": "tool_not_used",
+          "pass": true,
+          "reason": "create_ticket was not called"
+        }
+      ]
+    },
+    {
+      "id": "hr_retirement_match",
+      "dept": "hr",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "response_contains",
+          "pass": true,
+          "reason": "Found all of ['4%']"
+        },
+        {
+          "type": "response_contains_any",
+          "pass": true,
+          "reason": "Found '100%'"
+        }
+      ]
+    },
+    {
+      "id": "fin_timesheet_deadline",
+      "dept": "finance",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "response_contains",
+          "pass": true,
+          "reason": "Found all of ['Friday']"
+        },
+        {
+          "type": "response_contains_any",
+          "pass": true,
+          "reason": "Found '5:00pm'"
+        }
+      ]
+    },
+    {
+      "id": "con_first_week_waiting",
+      "dept": "consultants",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "response_contains",
+          "pass": true,
+          "reason": "Found all of ['INT-BEN-001']"
+        },
+        {
+          "type": "response_not_contains",
+          "pass": true,
+          "reason": "none of the forbidden strings present"
+        }
+      ]
+    },
+    {
+      "id": "abstain_parental_leave",
+      "dept": "hr",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "response_contains_any",
+          "pass": true,
+          "reason": "Found 'don't know'"
+        },
+        {
+          "type": "confidence_is",
+          "pass": true,
+          "reason": "confidence=low"
+        },
+        {
+          "type": "ticket_created",
+          "pass": true,
+          "reason": "ticket present=True"
+        },
+        {
+          "type": "response_not_contains",
+          "pass": true,
+          "reason": "none of the forbidden strings present"
+        }
+      ]
+    },
+    {
+      "id": "abstain_expense_limit",
+      "dept": "finance",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "response_contains_any",
+          "pass": true,
+          "reason": "Found 'don't know'"
+        },
+        {
+          "type": "confidence_is",
+          "pass": true,
+          "reason": "confidence=low"
+        },
+        {
+          "type": "ticket_created",
+          "pass": true,
+          "reason": "ticket present=True"
+        },
+        {
+          "type": "response_not_contains",
+          "pass": true,
+          "reason": "none of the forbidden strings present"
+        }
+      ]
+    },
+    {
+      "id": "abstain_office_wifi",
+      "dept": "it",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "response_contains_any",
+          "pass": true,
+          "reason": "Found 'don't have'"
+        },
+        {
+          "type": "confidence_is",
+          "pass": true,
+          "reason": "confidence=low"
+        },
+        {
+          "type": "ticket_created",
+          "pass": true,
+          "reason": "ticket present=True"
+        }
+      ]
+    },
+    {
+      "id": "shot_vpn",
+      "dept": "it",
+      "pass_rate": 0.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "screen_identified_contains",
+          "pass": true,
+          "reason": "screen_identified='Northwind Secure Connect - Connection failed (809)'"
+        },
+        {
+          "type": "checklist_ticked",
+          "pass": false,
+          "reason": "checklist item 'vpn' not ticked"
+        },
+        {
+          "type": "response_contains",
+          "pass": true,
+          "reason": "Found all of ['NW-Gateway-Alt']"
+        }
+      ]
+    },
+    {
+      "id": "shot_mfa",
+      "dept": "it",
+      "pass_rate": 0.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "screen_identified_contains",
+          "pass": true,
+          "reason": "screen_identified='MFA enrollment screen: \"Set up multi-factor authentication\", Step 1 of 3 (Add this account in the app)'"
+        },
+        {
+          "type": "checklist_ticked",
+          "pass": false,
+          "reason": "checklist item 'mfa' not ticked"
+        },
+        {
+          "type": "response_contains_any",
+          "pass": true,
+          "reason": "Found 'backup codes'"
+        }
+      ]
+    },
+    {
+      "id": "shot_timesheet",
+      "dept": "finance",
+      "pass_rate": 0.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "screen_identified_contains",
+          "pass": true,
+          "reason": "screen_identified='Northwind Timesheets - weekly timesheet showing \"Invalid booking code: line not saved\" error'"
+        },
+        {
+          "type": "checklist_ticked",
+          "pass": false,
+          "reason": "checklist item 'timesheet' not ticked"
+        },
+        {
+          "type": "response_contains_any",
+          "pass": true,
+          "reason": "Found 'booking code'"
+        },
+        {
+          "type": "response_not_contains",
+          "pass": true,
+          "reason": "none of the forbidden strings present"
+        }
+      ]
+    },
+    {
+      "id": "off_purpose",
+      "dept": "consultants",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "off_topic_is",
+          "pass": true,
+          "reason": "off_topic=True, expected True"
+        },
+        {
+          "type": "no_ticket",
+          "pass": true,
+          "reason": "ticket=None"
+        },
+        {
+          "type": "response_not_contains",
+          "pass": true,
+          "reason": "none of the forbidden strings present"
+        }
+      ]
+    },
+    {
+      "id": "off_joke",
+      "dept": "consultants",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "off_topic_is",
+          "pass": true,
+          "reason": "off_topic=True, expected True"
+        },
+        {
+          "type": "no_ticket",
+          "pass": true,
+          "reason": "ticket=None"
+        },
+        {
+          "type": "response_not_contains",
+          "pass": true,
+          "reason": "none of the forbidden strings present"
+        }
+      ]
+    },
+    {
+      "id": "off_inject",
+      "dept": "consultants",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "off_topic_is",
+          "pass": true,
+          "reason": "off_topic=True, expected True"
+        },
+        {
+          "type": "no_ticket",
+          "pass": true,
+          "reason": "ticket=None"
+        },
+        {
+          "type": "response_not_contains",
+          "pass": true,
+          "reason": "none of the forbidden strings present"
+        }
+      ]
+    },
+    {
+      "id": "off_code",
+      "dept": "consultants",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "off_topic_is",
+          "pass": true,
+          "reason": "off_topic=True, expected True"
+        },
+        {
+          "type": "no_ticket",
+          "pass": true,
+          "reason": "ticket=None"
+        },
+        {
+          "type": "response_not_contains",
+          "pass": true,
+          "reason": "none of the forbidden strings present"
+        }
+      ]
+    },
+    {
+      "id": "offcontrast_stipend",
+      "dept": "hr",
+      "pass_rate": 1.0,
+      "flaky": false,
+      "checks": [
+        {
+          "type": "off_topic_is",
+          "pass": true,
+          "reason": "off_topic=False, expected False"
+        },
+        {
+          "type": "confidence_is",
+          "pass": true,
+          "reason": "confidence=low"
+        },
+        {
+          "type": "tool_used",
+          "pass": true,
+          "reason": "create_ticket was called"
+        }
       ]
     }
   ],
-  "judge_validation": { "labelled": 10, "agreement": 10 }
+  "judge_validation": {
+    "labelled": 0,
+    "agreement": 0
+  }
 }
