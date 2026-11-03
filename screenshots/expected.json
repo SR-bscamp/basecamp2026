@@ -1,0 +1,20 @@
+{
+  "vpn-error.png": {
+    "screen_name": "VPN connection failed (error 809)",
+    "screen_keywords": ["vpn", "809"],
+    "checklist_item": "vpn",
+    "doc": "it/vpn-setup.md"
+  },
+  "mfa-enrollment.png": {
+    "screen_name": "MFA enrollment prompt",
+    "screen_keywords": ["mfa", "authenticator"],
+    "checklist_item": "mfa",
+    "doc": "it/mfa-setup.md"
+  },
+  "timesheet-invalid-code.png": {
+    "screen_name": "Timesheet with invalid booking code",
+    "screen_keywords": ["timesheet", "invalid"],
+    "checklist_item": "timesheet",
+    "doc": "finance/timesheets.md"
+  }
+}
