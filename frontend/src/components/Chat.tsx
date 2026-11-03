@@ -166,7 +166,7 @@ function AssistantCard({ resp, onTicket }: { resp: ChatResponse; onTicket?: () =
           <span className={`text-[10px] uppercase tracking-wider font-semibold rounded-full px-2 py-0.5 ${CONF[resp.confidence]}`}>
             {resp.confidence} confidence
           </span>
-          {resp.citations.map((c, i) => <CitationChip key={i} c={c} />)}
+          {groupCitations(resp.citations).map((c) => <CitationChip key={c.doc} c={c} />)}
           <span className="ml-auto text-[10px] font-mono text-zinc-500 tabular">
             {modelLabel(resp.usage.model)} · {fmtCents(resp.usage.cost_usd)} · {(resp.usage.latency_ms / 1000).toFixed(1)}s
           </span>
@@ -192,7 +192,20 @@ function AssistantCard({ resp, onTicket }: { resp: ChatResponse; onTicket?: () =
   )
 }
 
-function CitationChip({ c }: { c: Citation }) {
+type CitationGroup = { doc: string; title: string; quotes: string[] }
+
+/** The backend may cite one doc several times with different quotes: show one chip per doc. */
+function groupCitations(cs: Citation[]): CitationGroup[] {
+  const by = new Map<string, CitationGroup>()
+  for (const c of cs) {
+    const g = by.get(c.doc) ?? { doc: c.doc, title: c.title, quotes: [] }
+    if (c.quote && !g.quotes.includes(c.quote)) g.quotes.push(c.quote)
+    by.set(c.doc, g)
+  }
+  return [...by.values()]
+}
+
+function CitationChip({ c }: { c: CitationGroup }) {
   const [open, setOpen] = useState(false)
   return (
     <span className="relative">
@@ -203,7 +216,9 @@ function CitationChip({ c }: { c: Citation }) {
       {open && (
         <span className="absolute z-10 bottom-full mb-2 left-0 w-72 card p-3 text-xs shadow-2xl animate-rise block">
           <span className="font-mono text-zinc-500 block mb-1">knowledge/{c.doc}</span>
-          <span className="text-zinc-200 italic">"{c.quote}"</span>
+          {c.quotes.map((q, i) => (
+            <span key={i} className="text-zinc-200 italic block mt-1 first:mt-0">"{q}"</span>
+          ))}
         </span>
       )}
     </span>
