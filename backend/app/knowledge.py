@@ -15,20 +15,41 @@ def _read_docs(root: Path) -> dict[str, str]:
             for p in sorted(root.rglob("*.md")) if p.name.lower() != "readme.md"}
 
 
-def load_docs() -> dict[str, str]:
-    docs = _read_docs(config.KNOWLEDGE_DIR) if config.KNOWLEDGE_DIR.exists() else {}
+def load_docs(knowledge_dir: Path | None = None) -> dict[str, str]:
+    root = knowledge_dir or config.KNOWLEDGE_DIR
+    docs = _read_docs(root) if root.exists() else {}
     if not docs:
         log.warning("knowledge/ has no docs yet; using backend/stubs/knowledge")
         docs = _read_docs(config.STUBS_DIR / "knowledge")
     return docs
 
 
-def load_json(name: str):
-    for base in (config.DATA_DIR, config.STUBS_DIR / "data"):
+def load_json(name: str, data_dir: Path | None = None):
+    for base in (data_dir or config.DATA_DIR, config.STUBS_DIR / "data"):
         path = base / name
         if path.exists():
             return json.loads(path.read_text(encoding="utf-8"))
     raise FileNotFoundError(name)
+
+
+def _unwrap_list(raw, key: str) -> list:
+    """Accept a bare list or an object like {"_note": "...", "<key>": [...]}."""
+    if isinstance(raw, list):
+        return raw
+    if isinstance(raw.get(key), list):
+        return raw[key]
+    return next((v for k, v in raw.items() if not k.startswith("_") and isinstance(v, list)), [])
+
+
+def _normalize_checklists(raw) -> dict:
+    """Return {dept: {role: {"groups": [...]}}} from either the nested shape or a flat list of {dept, role, groups}."""
+    entries = raw.get("checklists") if isinstance(raw, dict) else raw
+    if isinstance(entries, list):
+        out: dict = {}
+        for e in entries:
+            out.setdefault(e["dept"], {})[e["role"]] = {"groups": e["groups"]}
+        return out
+    return {k: v for k, v in raw.items() if not k.startswith("_")}
 
 
 def build_prefix(docs: dict[str, str]) -> str:
@@ -38,12 +59,12 @@ def build_prefix(docs: dict[str, str]) -> str:
 
 
 class Knowledge:
-    def __init__(self):
-        self.docs = load_docs()
+    def __init__(self, knowledge_dir: Path | None = None, data_dir: Path | None = None):
+        self.docs = load_docs(knowledge_dir)
         self.prefix = build_prefix(self.docs)
-        self.checklists = load_json("checklists.json")
-        self.booking_codes = load_json("booking_codes.json")
-        self.contacts = load_json("contacts.json")
+        self.checklists = _normalize_checklists(load_json("checklists.json", data_dir))
+        self.booking_codes = _unwrap_list(load_json("booking_codes.json", data_dir), "codes")
+        self.contacts = _unwrap_list(load_json("contacts.json", data_dir), "contacts")
         est = len(self.prefix) // 4
         log.info("knowledge: %d docs, ~%d tokens in the cached prefix", len(self.docs), est)
         if est < CACHE_MIN_TOKENS_GUESS:

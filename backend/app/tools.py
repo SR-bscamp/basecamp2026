@@ -47,7 +47,8 @@ TOOL_SPECS = [
         "name": "find_contact",
         "description": (
             "Find the right person or team for a topic (for example 'VPN', 'benefits', 'expenses'). "
-            "Returns name, team and an alias, or found=false."),
+            "Returns the contact (name, email, hours, ticket_queue) or found=false. When you open a ticket for the topic, use "
+            "the contact's ticket_queue."),
         "input_schema": {"type": "object", "properties": {
             "topic": {"type": "string", "description": "What the user needs help with."}},
             "required": ["topic"]},
@@ -85,9 +86,11 @@ TOOL_SPECS = [
 ]
 
 
-def _match(query: str, *fields: str) -> bool:
+def _match(query: str, *fields) -> bool:
+    """Case-insensitive substring match against strings or lists of strings (aliases, topics)."""
     q = query.strip().lower()
-    return bool(q) and any(q in (f or "").lower() for f in fields)
+    flat = [x for f in fields for x in (f if isinstance(f, (list, tuple)) else [f])]
+    return bool(q) and any(q in str(x or "").lower() for x in flat)
 
 
 def execute(name: str, args: dict, ctx: Ctx) -> str:
@@ -95,7 +98,7 @@ def execute(name: str, args: dict, ctx: Ctx) -> str:
     k = ctx.knowledge
     if name == "lookup_booking_code":
         q = str(args.get("query", ""))
-        rows = [r for r in k.booking_codes if _match(q, r.get("code"), r.get("client"), r.get("project"), r.get("notes"))]
+        rows = [r for r in k.booking_codes if _match(q, r.get("code"), r.get("client"), r.get("project"), r.get("notes"), r.get("aliases"))]
         ctx.last_ok = bool(rows)
         if not rows:
             return json.dumps({"found": False, "message": f"No booking code matches '{q}'. Do not guess a code."})
@@ -112,7 +115,7 @@ def execute(name: str, args: dict, ctx: Ctx) -> str:
         return json.dumps({"ok": True})
     if name == "find_contact":
         topic = str(args.get("topic", ""))
-        rows = [c for c in k.contacts if _match(topic, c.get("topic"), c.get("team"))]
+        rows = [c for c in k.contacts if _match(topic, c.get("topic"), c.get("topics"), c.get("name"), c.get("team"), c.get("team_dept"))]
         ctx.last_ok = bool(rows)
         return json.dumps({"found": bool(rows), "contacts": rows})
     if name == "create_ticket":

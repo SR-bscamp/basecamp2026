@@ -32,7 +32,8 @@ class FakeClient:
 
 @pytest.fixture(scope="module")
 def kn():
-    return Knowledge()
+    """Stub content, so these tests don't break when the team edits the real docs and data."""
+    return Knowledge(config.STUBS_DIR / "knowledge", config.STUBS_DIR / "data")
 
 
 def run(client, kn, message="hi", **kw):
@@ -355,3 +356,40 @@ def test_warm_endpoint_reports_cache_usage(monkeypatch):
     monkeypatch.setattr(m, "client", FakeClient(NS(content=[], usage=u, stop_reason="end_turn")))
     out = TestClient(app).post("/api/warm").json()
     assert out["ok"] is True and out["cache_write_tokens"] == 2210
+
+
+# ---------------------------------------------------------------- real repo content stays consistent
+
+def test_real_content_is_consistent_and_loads_in_both_shapes():
+    real = Knowledge()  # whatever is in knowledge/ and data/ (stubs until Lane C lands)
+    assert real.docs and real.booking_codes and real.contacts and real.checklists
+    codes = [r["code"] for r in real.booking_codes]
+    assert len(codes) == len(set(codes)), "duplicate booking codes"
+    for by_role in real.checklists.values():
+        for data in by_role.values():
+            for g in data["groups"]:
+                for item in g["items"]:
+                    assert item["doc"] in real.docs, f"checklist item {item['id']} points at missing doc {item['doc']}"
+    for c in real.contacts:
+        if "ticket_queue" in c:
+            assert c["ticket_queue"] in ("IT", "HR"), c
+
+
+def test_alias_and_topic_matching_for_the_team_data_shapes():
+    from app.tools import Ctx, execute
+    import json
+    k = Knowledge.__new__(Knowledge)
+    k.booking_codes = [{"code": "INT-TRN-001", "project": "Internal training", "aliases": ["courses", "certification"]}]
+    k.contacts = [{"id": "it", "name": "IT Helpdesk", "topics": ["vpn", "mfa"], "team_dept": "IT", "ticket_queue": "IT"}]
+    k.checklists = {}
+    ctx = Ctx("s", Store().get("s"), Store(), k, "it", "x")
+    assert json.loads(execute("lookup_booking_code", {"query": "certification"}, ctx))["found"] is True
+    assert json.loads(execute("find_contact", {"topic": "VPN"}, ctx))["contacts"][0]["ticket_queue"] == "IT"
+
+
+def test_wrapped_data_shapes_are_normalized():
+    from app.knowledge import _normalize_checklists, _unwrap_list
+    flat = {"_note": "x", "checklists": [{"dept": "it", "role": "helpdesk", "groups": [{"id": "g", "title": "G", "items": []}]}]}
+    assert _normalize_checklists(flat)["it"]["helpdesk"]["groups"][0]["id"] == "g"
+    assert _unwrap_list({"_note": "x", "codes": [{"code": "A"}]}, "codes") == [{"code": "A"}]
+    assert _unwrap_list([{"code": "B"}], "codes") == [{"code": "B"}]
