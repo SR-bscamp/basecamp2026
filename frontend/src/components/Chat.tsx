@@ -1,22 +1,31 @@
+import {
+  ArrowRight, ArrowUp, CheckSquare, Contact, ImagePlus, Loader2, ScanSearch, Search, Ticket as TicketIcon, X,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
-import type { ChatResponse, Citation } from '../api'
-import { fmtCents, modelLabel } from '../depts'
+import type { ChatResponse, Citation, ToolCall } from '../api'
+import { fmtCents, modelLabel, type DeptInfo } from '../depts'
+import { Terrain } from './Terrain'
 
 export interface Attachment { dataUrl: string; b64: string; mediaType: string; name: string }
 export type Msg =
   | { id: string; role: 'user'; text: string; image?: string }
   | { id: string; role: 'assistant'; resp: ChatResponse }
 
+/** The answer while it streams: tool events as live status, reply text as it is written. */
+export interface Live { text: string; tools: ToolCall[] }
+
 interface Props {
   messages: Msg[]
+  live: Live | null
   pending: boolean
-  deptName: string
+  info: DeptInfo
   suggestions: string[]
   onSend: (text: string, att: Attachment | null) => void
+  onOpenDoc: (doc: string, quotes?: string[]) => void
 }
 
-export function Chat({ messages, pending, deptName, suggestions, onSend }: Props) {
+export function Chat({ messages, live, pending, info, suggestions, onSend, onOpenDoc }: Props) {
   const [text, setText] = useState('')
   const [att, setAtt] = useState<Attachment | null>(null)
   const [dragging, setDragging] = useState(false)
@@ -24,7 +33,7 @@ export function Chat({ messages, pending, deptName, suggestions, onSend }: Props
   const endRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [messages, pending])
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [messages, live?.text, live?.tools.length, pending])
 
   const readFile = (f: File | undefined | null) => {
     if (!f || !f.type.startsWith('image/')) return
@@ -45,156 +54,256 @@ export function Chat({ messages, pending, deptName, suggestions, onSend }: Props
     setAtt(null)
   }
 
-  const lastUserText = [...messages].reverse().find((m) => m.role === 'user') as Extract<Msg, { role: 'user' }> | undefined
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user') as Extract<Msg, { role: 'user' }> | undefined
 
   return (
     <div
-      className="card flex flex-col h-full min-h-0 relative overflow-hidden"
+      className="flex flex-col h-full min-h-0 relative"
       onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-      onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false) }}
+      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false) }}
       onDrop={(e) => { e.preventDefault(); setDragging(false); readFile(e.dataTransfer.files[0]) }}
     >
       {dragging && (
-        <div className="absolute inset-3 z-20 rounded-xl border-2 border-dashed border-accent bg-zinc-950/85 grid place-items-center pointer-events-none">
-          <div className="text-center">
-            <div className="text-4xl mb-2 text-accent">⌖</div>
-            <p className="font-medium">Drop a screenshot</p>
-            <p className="text-sm text-zinc-400">Compass will read the screen and tell you what to do.</p>
+        <div className="absolute inset-4 z-20 border-2 border-dashed border-accent bg-paper/95 grid place-items-center pointer-events-none overflow-hidden">
+          <Terrain kind={info.terrain} color={info.accent} opacity={0.25} />
+          <div className="relative text-center">
+            <ScanSearch size={40} strokeWidth={1.25} className="mx-auto text-accent mb-3" />
+            <p className="display text-5xl">Drop it here.</p>
+            <p className="text-ink-2 mt-2">Compass will read the screen and tell you what to do next.</p>
           </div>
         </div>
       )}
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5 flex flex-col gap-4">
-        {messages.length === 0 && !pending && (
-          <div className="m-auto text-center max-w-md animate-rise">
-            <p className="text-zinc-400 mb-5">Ask anything about {deptName}, or drop a screenshot of what's in front of you.</p>
-            <div className="flex flex-col gap-2">
-              {suggestions.map((s) => (
-                <button key={s} onClick={() => submit(s)}
-                  className="text-left text-sm rounded-xl border border-white/10 px-4 py-2.5 hover:border-accent/50 hover:bg-accent-soft transition">
-                  {s}
-                </button>
-              ))}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-6 sm:px-10 py-8 flex flex-col gap-10">
+          {messages.length === 0 && !pending && (
+            <div className="animate-rise pt-[6vh]">
+              <p className="eyebrow mb-4">Field notes</p>
+              <h2 className="display text-6xl sm:text-7xl">Ask anything<br />about <em className="text-accent">{info.short}.</em></h2>
+              <p className="text-ink-2 mt-4 max-w-md">Answers come only from Northwind's documents, with sources. Or paste a screenshot of what's in front of you.</p>
+              <ol className="mt-8 border-t rule">
+                {suggestions.map((s, i) => (
+                  <li key={s}>
+                    <button onClick={() => submit(s)}
+                      className="group w-full flex items-baseline gap-5 py-4 border-b rule text-left hover:text-accent transition-colors">
+                      <span className="font-mono text-xs text-ink-3 group-hover:text-accent">{String(i + 1).padStart(2, '0')}</span>
+                      <span className="text-lg flex-1">{s}</span>
+                      <ArrowRight size={18} strokeWidth={1.5} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition" />
+                    </button>
+                  </li>
+                ))}
+              </ol>
             </div>
-          </div>
-        )}
+          )}
 
-        {messages.map((m, i) =>
-          m.role === 'user' ? (
-            <div key={m.id} className="self-end max-w-[80%] animate-rise flex flex-col items-end gap-2">
-              {m.image && <img src={m.image} alt="Uploaded screenshot" className="max-h-40 rounded-xl border border-white/10" />}
-              <div className="rounded-2xl rounded-br-md bg-accent text-zinc-950 px-4 py-2.5 text-sm font-medium whitespace-pre-wrap">{m.text}</div>
-            </div>
-          ) : (
-            <AssistantCard key={m.id} resp={m.resp}
-              onTicket={i === messages.length - 1 && lastUserText
-                ? () => submit(`Please open a ticket for this: ${lastUserText.text}`) : undefined} />
-          ),
-        )}
+          {messages.map((m, i) =>
+            m.role === 'user' ? (
+              <div key={m.id} className="self-end max-w-[85%] animate-rise flex flex-col items-end gap-2">
+                {m.image && <img src={m.image} alt="Your screenshot" className="max-h-44 border rule shadow-[6px_6px_0_rgba(20,18,15,0.08)]" />}
+                <p className="bg-ink text-paper px-4 py-2.5 text-[15px] leading-snug whitespace-pre-wrap">{m.text}</p>
+              </div>
+            ) : (
+              <FieldNote key={m.id} resp={m.resp} onOpenDoc={onOpenDoc}
+                onTicket={i === messages.length - 1 && lastUser && !pending
+                  ? () => submit(`Please open a ticket for this: ${lastUser.text}`) : undefined} />
+            ),
+          )}
 
-        {pending && (
-          <div className="self-start card px-4 py-3 typing flex gap-1 text-accent text-lg leading-none" aria-label="Compass is thinking">
-            <span>●</span><span>●</span><span>●</span>
-          </div>
-        )}
-        <div ref={endRef} />
+          {pending && <LiveNote live={live} />}
+          <div ref={endRef} />
+        </div>
       </div>
 
-      <div className="border-t border-white/[0.07] p-3">
-        {att && (
-          <div className="flex items-center gap-3 mb-2 p-2 rounded-xl bg-white/[0.04] animate-rise">
-            <img src={att.dataUrl} alt="Attachment preview" className="h-12 w-16 object-cover rounded-md" />
-            <span className="text-xs text-zinc-400 flex-1 truncate">{att.name}</span>
-            <button onClick={() => setAtt(null)} className="text-xs text-zinc-400 hover:text-white px-2" aria-label="Remove attachment">✕</button>
+      <div className="border-t rule bg-paper/90 backdrop-blur-sm">
+        <div className="max-w-3xl mx-auto px-6 sm:px-10 py-4">
+          {att && (
+            <div className="flex items-center gap-3 mb-3 animate-rise">
+              <img src={att.dataUrl} alt="Attachment preview" className="h-14 w-20 object-cover border rule" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm truncate">{att.name}</p>
+                <p className="eyebrow">Screenshot attached</p>
+              </div>
+              <button onClick={() => setAtt(null)} className="p-1.5 text-ink-3 hover:text-ink" aria-label="Remove attachment"><X size={16} /></button>
+            </div>
+          )}
+          <div className="flex items-end gap-2 border-b-[1.5px] border-ink focus-within:border-accent transition-colors">
+            <button onClick={() => fileRef.current?.click()} title="Attach a screenshot" aria-label="Attach a screenshot"
+              className="shrink-0 p-2 mb-0.5 text-ink-2 hover:text-accent transition-colors">
+              <ImagePlus size={20} strokeWidth={1.5} />
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" hidden
+              onChange={(e) => { readFile(e.target.files?.[0]); e.target.value = '' }} />
+            <textarea
+              id="chat-input" ref={inputRef} rows={1} value={text}
+              onChange={(e) => setText(e.target.value)}
+              onPaste={(e) => { const f = [...e.clipboardData.files][0]; if (f) { e.preventDefault(); readFile(f) } }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
+              placeholder="Ask Compass, or paste a screenshot…"
+              className="flex-1 resize-none bg-transparent py-3 text-[17px] max-h-32 placeholder:text-ink-3 focus:outline-none"
+            />
+            <button onClick={() => submit()} disabled={pending || (!text.trim() && !att)} aria-label="Send"
+              className="shrink-0 mb-1.5 w-9 h-9 grid place-items-center bg-ink text-paper hover:bg-accent disabled:opacity-25 disabled:hover:bg-ink transition-colors">
+              <ArrowUp size={18} strokeWidth={2} />
+            </button>
           </div>
-        )}
-        <div className="flex items-end gap-2">
-          <button onClick={() => fileRef.current?.click()} title="Attach screenshot"
-            className="shrink-0 w-10 h-10 rounded-xl border border-white/10 hover:border-accent hover:text-accent transition grid place-items-center">
-            ⎘
-          </button>
-          <input ref={fileRef} type="file" accept="image/*" hidden
-            onChange={(e) => { readFile(e.target.files?.[0]); e.target.value = '' }} />
-          <textarea
-            id="chat-input" ref={inputRef} rows={1} value={text}
-            onChange={(e) => setText(e.target.value)}
-            onPaste={(e) => { const f = [...e.clipboardData.files][0]; if (f) { e.preventDefault(); readFile(f) } }}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
-            placeholder="Ask Compass…  (paste or drop a screenshot)"
-            className="flex-1 resize-none bg-zinc-950/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm max-h-32 focus:outline-none focus:border-accent"
-          />
-          <button onClick={() => submit()} disabled={pending || (!text.trim() && !att)}
-            className="shrink-0 h-10 px-4 rounded-xl bg-accent text-zinc-950 text-sm font-semibold disabled:opacity-30 hover:brightness-110 active:scale-95 transition">
-            Send
-          </button>
         </div>
       </div>
     </div>
   )
 }
 
-const CONF: Record<ChatResponse['confidence'], string> = {
-  high: 'bg-emerald-400/15 text-emerald-300',
-  medium: 'bg-amber-400/15 text-amber-300',
-  low: 'bg-red-400/15 text-red-300',
+const TOOL: Record<string, { icon: typeof Search; doing: string; done: (input: Record<string, unknown>, ok: boolean) => string }> = {
+  lookup_booking_code: {
+    icon: Search, doing: 'Looking up booking codes',
+    done: (i, ok) => `Looked up “${String(i.client_or_project ?? i.query ?? '')}” in booking codes${ok ? '' : ': not found'}`,
+  },
+  tick_checklist: {
+    icon: CheckSquare, doing: 'Updating your route',
+    done: (i, ok) => (ok ? `Ticked “${String(i.item_id ?? '')}” on your route` : `Couldn't tick “${String(i.item_id ?? '')}”`),
+  },
+  find_contact: {
+    icon: Contact, doing: 'Finding the right person',
+    done: (i, ok) => `Searched contacts for “${String(i.topic ?? '')}”${ok ? '' : ': nobody listed'}`,
+  },
+  create_ticket: {
+    icon: TicketIcon, doing: 'Opening a ticket',
+    done: (i) => `Opened a ticket with ${String(i.queue ?? 'support')}`,
+  },
+}
+const toolInfo = (name: string) => TOOL[name] ?? { icon: Search, doing: `Running ${name}`, done: () => `Ran ${name}` }
+
+function LiveNote({ live }: { live: Live | null }) {
+  const tools = live?.tools ?? []
+  return (
+    <article className="animate-rise" aria-live="polite">
+      <p className="eyebrow mb-3 flex items-center gap-2"><Loader2 size={12} className="animate-spin text-accent" /> Compass is working</p>
+      {tools.length > 0 && (
+        <ul className="mb-4 flex flex-col gap-1.5">
+          {tools.map((t, i) => {
+            const ti = toolInfo(t.name)
+            const Icon = ti.icon
+            return (
+              <li key={i} className="flex items-center gap-2.5 text-sm text-ink-2 animate-rise">
+                {t.ok === undefined ? <Loader2 size={15} className="animate-spin text-accent" /> : <Icon size={15} strokeWidth={1.6} className="text-accent" />}
+                {t.ok === undefined ? `${ti.doing}…` : ti.done(t.input, t.ok)}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      {live?.text ? (
+        <div className="md text-[17px] leading-relaxed caret"><Markdown>{live.text}</Markdown></div>
+      ) : tools.length === 0 ? (
+        <div className="flex flex-col gap-2.5">{[85, 70, 40].map((w) => <div key={w} className="skeleton h-4" style={{ width: `${w}%` }} />)}</div>
+      ) : null}
+    </article>
+  )
 }
 
-function AssistantCard({ resp, onTicket }: { resp: ChatResponse; onTicket?: () => void }) {
+/** One answer as one designed object: reply, steps, what Compass did, ticket, footnoted sources. */
+function FieldNote({ resp, onTicket, onOpenDoc }: { resp: ChatResponse; onTicket?: () => void; onOpenDoc: Props['onOpenDoc'] }) {
+  const sources = groupCitations(resp.citations)
+  const tools = resp.tool_calls ?? []
+  const meta = `${modelLabel(resp.usage.model)} · ${fmtCents(resp.usage.cost_usd)} · ${(resp.usage.latency_ms / 1000).toFixed(1)}s`
+
+  if (resp.off_topic) {
+    return (
+      <article className="animate-rise border-l-[3px] border-accent pl-6 py-1">
+        <p className="eyebrow mb-3">Off the record</p>
+        <blockquote className="display italic text-[2.1rem] leading-[1.1] text-ink">
+          <Markdown components={{ p: ({ children }) => <>{children}</> }}>{resp.reply}</Markdown>
+        </blockquote>
+        <p className="mt-4 font-mono text-[11px] text-ink-3">Compass, in its best consultant voice · {meta}</p>
+      </article>
+    )
+  }
+
+  const unsure = resp.confidence === 'low'
   return (
-    <div className="self-start max-w-[88%] flex flex-col gap-2.5 animate-rise">
+    <article className="animate-rise">
       {resp.screen_identified && (
-        <div className="rounded-xl border border-accent/30 bg-accent-soft px-4 py-2.5 text-sm">
-          <span className="text-[10px] uppercase tracking-[0.18em] text-accent font-semibold block mb-0.5">What I see</span>
-          {resp.screen_identified}
-        </div>
-      )}
-      <div className="card px-4 py-3.5 text-sm leading-relaxed">
-        <div className="md"><Markdown>{resp.reply}</Markdown></div>
-
-        {resp.steps.length > 0 && (
-          <ol className="mt-3 flex flex-col gap-1.5">
-            {resp.steps.map((s, i) => (
-              <li key={i} className="flex gap-3 items-start rounded-lg bg-white/[0.035] px-3 py-2">
-                <span className="shrink-0 w-5 h-5 rounded-full bg-accent-soft text-accent text-[11px] font-semibold grid place-items-center tabular">{i + 1}</span>
-                <span>{s}</span>
-              </li>
-            ))}
-          </ol>
-        )}
-
-        <div className="mt-3 flex flex-wrap items-center gap-1.5">
-          <span className={`text-[10px] uppercase tracking-wider font-semibold rounded-full px-2 py-0.5 ${CONF[resp.confidence]}`}>
-            {resp.confidence} confidence
-          </span>
-          {groupCitations(resp.citations).map((c) => <CitationChip key={c.doc} c={c} />)}
-          <span className="ml-auto text-[10px] font-mono text-zinc-500 tabular">
-            {modelLabel(resp.usage.model)} · {fmtCents(resp.usage.cost_usd)} · {(resp.usage.latency_ms / 1000).toFixed(1)}s
-          </span>
-        </div>
-      </div>
-
-      {resp.ticket && (
-        <div className="card px-4 py-3 flex items-center gap-3 border-accent/30">
-          <span className="w-8 h-8 rounded-lg bg-accent-soft text-accent grid place-items-center">✉</span>
-          <div className="text-sm flex-1">
-            <div className="font-medium">Ticket <span className="font-mono">{resp.ticket.id}</span> opened · {resp.ticket.queue} queue</div>
-            <div className="text-zinc-400 text-xs">{resp.ticket.summary}</div>
+        <div className="mb-5 flex items-start gap-3 border-y rule py-3">
+          <ScanSearch size={18} strokeWidth={1.5} className="text-accent shrink-0 mt-0.5" />
+          <div>
+            <p className="eyebrow">On your screen</p>
+            <p className="display text-2xl mt-1 leading-tight">{resp.screen_identified}</p>
           </div>
         </div>
       )}
-      {!resp.ticket && resp.confidence === 'low' && onTicket && (
-        <button onClick={onTicket}
-          className="self-start text-sm rounded-xl border border-dashed border-red-300/40 text-red-200 px-4 py-2 hover:bg-red-400/10 transition">
-          The docs don't cover this. Create a ticket →
+
+      <div className="md text-[17px] leading-relaxed text-ink">
+        <Markdown>{resp.reply}</Markdown>
+      </div>
+
+      {resp.steps.length > 0 && (
+        <ol className="mt-5 border-t rule">
+          {resp.steps.map((s, i) => (
+            <li key={i} className="flex gap-5 py-3 border-b rule">
+              <span className="display text-3xl text-accent w-7 text-right shrink-0 leading-none pt-0.5 tabular">{i + 1}</span>
+              <span className="text-[15px] leading-snug pt-1">{s}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {tools.length > 0 && (
+        <div className="mt-5">
+          <p className="eyebrow mb-2">What Compass did</p>
+          <ul className="flex flex-col gap-1.5">
+            {tools.map((t, i) => {
+              const ti = toolInfo(t.name)
+              const Icon = ti.icon
+              return (
+                <li key={i} className="flex items-center gap-2.5 text-sm text-ink-2">
+                  <Icon size={15} strokeWidth={1.6} className={t.ok === false ? 'text-ink-3' : 'text-accent'} />
+                  {ti.done(t.input, t.ok ?? true)}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
+
+      {resp.ticket && (
+        <div className="mt-6 relative border-[1.5px] border-dashed border-ink/40 px-5 py-4 flex gap-4 items-start bg-paper-2/50">
+          <TicketIcon size={20} strokeWidth={1.5} className="text-accent shrink-0 mt-1" />
+          <div className="flex-1">
+            <p className="font-mono text-xs uppercase tracking-[0.14em]">
+              <span className="text-accent">{resp.ticket.id}</span> · routed to {resp.ticket.queue}
+            </p>
+            <p className="text-sm text-ink-2 mt-1.5 leading-snug">{resp.ticket.summary}</p>
+          </div>
+          <span className="absolute -top-2.5 right-4 bg-paper px-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-3">Ticket opened</span>
+        </div>
+      )}
+
+      {!resp.ticket && unsure && onTicket && (
+        <button onClick={onTicket} className="mt-5 inline-flex items-center gap-2 text-sm border-b border-ink pb-0.5 hover:text-accent hover:border-accent transition-colors">
+          The docs don't cover this. Open a ticket <ArrowRight size={14} />
         </button>
       )}
-    </div>
+
+      <footer className="mt-6 pt-3 border-t-[1.5px] border-ink flex flex-wrap items-baseline gap-x-6 gap-y-2">
+        <span className={`font-mono text-[11px] uppercase tracking-[0.12em] ${unsure ? 'text-[#B42318]' : 'text-ink-2'}`}>
+          {unsure ? 'Not in the docs' : resp.confidence === 'medium' ? 'Partly grounded' : 'Grounded'}
+          {sources.length > 0 && ` · ${sources.length} source${sources.length > 1 ? 's' : ''}`}
+        </span>
+        {sources.map((c, i) => (
+          <button key={c.doc} onClick={() => onOpenDoc(c.doc, c.quotes)}
+            className="text-sm text-ink-2 hover:text-accent transition-colors text-left">
+            <sup className="font-mono text-accent mr-1">{i + 1}</sup>
+            <span className="underline decoration-ink/25 underline-offset-[3px]">{c.title}</span>
+          </button>
+        ))}
+        <span className="ml-auto font-mono text-[11px] text-ink-3 tabular">{meta}</span>
+      </footer>
+    </article>
   )
 }
 
 type CitationGroup = { doc: string; title: string; quotes: string[] }
 
-/** The backend may cite one doc several times with different quotes: show one chip per doc. */
+/** The backend may cite one doc several times with different quotes: one footnote per doc. */
 function groupCitations(cs: Citation[]): CitationGroup[] {
   const by = new Map<string, CitationGroup>()
   for (const c of cs) {
@@ -205,22 +314,3 @@ function groupCitations(cs: Citation[]): CitationGroup[] {
   return [...by.values()]
 }
 
-function CitationChip({ c }: { c: CitationGroup }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <span className="relative">
-      <button onClick={() => setOpen(!open)}
-        className="text-[11px] rounded-full border border-white/10 px-2 py-0.5 hover:border-accent hover:text-accent transition">
-        ↗ {c.title}
-      </button>
-      {open && (
-        <span className="absolute z-10 bottom-full mb-2 left-0 w-72 card p-3 text-xs shadow-2xl animate-rise block">
-          <span className="font-mono text-zinc-500 block mb-1">knowledge/{c.doc}</span>
-          {c.quotes.map((q, i) => (
-            <span key={i} className="text-zinc-200 italic block mt-1 first:mt-0">"{q}"</span>
-          ))}
-        </span>
-      )}
-    </span>
-  )
-}

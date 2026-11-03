@@ -4,41 +4,43 @@ export interface DeptInfo {
   id: Dept
   name: string
   short: string
+  /** One-line territory description in the atlas voice. */
   pitch: string
   accent: string
-  icon: string
+  terrain: 'circuit' | 'contours' | 'survey' | 'ledger'
   roles: string[]
+  /** Fallback when GET /api/suggestions is unavailable (fixture mode). */
   suggestions: string[]
 }
 
 export const DEPTS: DeptInfo[] = [
   {
-    id: 'it', name: 'IT', short: 'IT', accent: '#22d3ee', icon: '⌁',
-    pitch: 'Laptop, VPN, MFA and the systems you need on day one.',
-    roles: ['Engineer', 'Support analyst', 'Security analyst'],
-    suggestions: ['How do I set up the VPN?', 'My MFA app is not showing a code', 'Who do I ask for admin rights?'],
-  },
-  {
-    id: 'hr', name: 'HR', short: 'HR', accent: '#fb7185', icon: '◍',
-    pitch: 'Benefits, leave, payroll and who to talk to.',
-    roles: ['HR generalist', 'Recruiter', 'People partner'],
-    suggestions: ['When is the benefits enrolment deadline?', 'How many days of leave do I get?', 'Who is my onboarding buddy?'],
-  },
-  {
-    id: 'consultants', name: 'Consultants', short: 'Consulting', accent: '#a78bfa', icon: '◆',
+    id: 'consultants', name: 'Consultants', short: 'Consulting', accent: '#0F766E', terrain: 'survey',
     pitch: 'Staffing, engagements and how to book your time.',
     roles: ['Analyst', 'Consultant', 'Manager'],
     suggestions: ['Which booking code do I use for internal training?', 'What is the code for Project Zephyr?', 'How does staffing work?'],
   },
   {
-    id: 'finance', name: 'Finance & Booking Codes', short: 'Finance', accent: '#fbbf24', icon: '▲',
+    id: 'it', name: 'IT', short: 'IT', accent: '#1F4FD1', terrain: 'circuit',
+    pitch: 'Laptop, VPN, MFA and the systems you need on day one.',
+    roles: ['Engineer', 'Support analyst', 'Security analyst'],
+    suggestions: ['My VPN shows error 809. What do I do?', 'How do I set up MFA?', 'Who do I ask for admin rights?'],
+  },
+  {
+    id: 'hr', name: 'HR', short: 'HR', accent: '#C2410C', terrain: 'contours',
+    pitch: 'Benefits, leave, payroll and the people to ask.',
+    roles: ['HR generalist', 'Recruiter', 'People partner'],
+    suggestions: ['When is the benefits enrolment deadline?', 'How many days of leave do I get?', 'Who is my onboarding buddy?'],
+  },
+  {
+    id: 'finance', name: 'Finance & Booking Codes', short: 'Finance', accent: '#A16207', terrain: 'ledger',
     pitch: 'Timesheets, booking codes and expenses, done right.',
     roles: ['Analyst', 'Controller', 'Accounts payable'],
     suggestions: ['Which code do I use when I am on the bench?', 'When are timesheets due?', 'How do I submit an expense?'],
   },
 ]
 
-export const deptById = (id: Dept) => DEPTS.find((d) => d.id === id)!
+export const deptById = (id: Dept): DeptInfo | undefined => DEPTS.find((d) => d.id === id)
 
 export const MODELS = [
   { id: 'claude-haiku-5-5', label: 'Haiku 5.5' },

@@ -1,50 +1,64 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-paper: #F3EFE6;
+  --color-paper-2: #EAE4D7;
+  --color-ink: #14120F;
+  --color-ink-2: #4A453D;
+  --color-ink-3: #8A8377;
+  --color-rule: rgba(20, 18, 15, 0.14);
   --color-accent: var(--accent);
-  --color-accent-soft: color-mix(in oklab, var(--accent) 18%, transparent);
+  --color-accent-wash: color-mix(in oklab, var(--accent) 10%, var(--color-paper));
 }
 
-:root {
-  --accent: #a78bfa;
-  color-scheme: dark;
-}
+:root { --accent: #14120F; color-scheme: light; }
 
 body {
-  @apply bg-zinc-950 text-zinc-100 font-sans antialiased;
-  font-feature-settings: "cv11", "ss01";
+  @apply bg-paper text-ink font-sans antialiased;
+  /* faint paper grain */
+  background-image: radial-gradient(rgba(20,18,15,0.035) 1px, transparent 1px);
+  background-size: 3px 3px;
 }
+
+::selection { background: color-mix(in oklab, var(--accent) 25%, transparent); }
 
 .tabular { font-variant-numeric: tabular-nums; }
+.display { font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.02em; line-height: 0.9; }
+.eyebrow { @apply font-mono text-[11px] uppercase tracking-[0.14em] text-ink-3; }
+.rule { @apply border-rule; }
 
-.glow {
-  background: radial-gradient(60% 60% at 50% 40%, color-mix(in oklab, var(--accent) 28%, transparent), transparent 70%);
+@keyframes rise { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+.animate-rise { animation: rise 420ms cubic-bezier(.2,.8,.2,1) both; }
+
+@keyframes stamp { 0% { opacity: 0; transform: scale(1.8) rotate(-14deg) } 60% { opacity: 1; transform: scale(.92) rotate(-8deg) } 100% { transform: scale(1) rotate(-8deg) } }
+.animate-stamp { animation: stamp 520ms cubic-bezier(.3,1.4,.5,1) both; }
+
+@keyframes draw { from { stroke-dashoffset: var(--len, 40) } to { stroke-dashoffset: 0 } }
+.animate-draw { stroke-dasharray: var(--len, 40); animation: draw 360ms ease-out both; }
+
+@keyframes strike { from { background-size: 0% 1.5px } to { background-size: 100% 1.5px } }
+.struck {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat; background-position: 0 55%; background-size: 100% 1.5px;
+  animation: strike 380ms ease-out both;
 }
 
-.card { @apply rounded-2xl border border-white/[0.07] bg-zinc-900/60 backdrop-blur; }
+@keyframes blink { 50% { opacity: 0 } }
+.caret::after { content: ""; display: inline-block; width: 2px; height: 1em; margin-left: 2px; vertical-align: -0.15em; background: var(--accent); animation: blink 1s steps(1) infinite; }
 
-@keyframes pop { 0% { transform: scale(1) } 40% { transform: scale(1.25) } 100% { transform: scale(1) } }
-.animate-pop { animation: pop 380ms cubic-bezier(.3,1.6,.5,1); }
+@keyframes shimmer { from { background-position: -200% 0 } to { background-position: 200% 0 } }
+.skeleton { background: linear-gradient(90deg, var(--color-paper-2) 0%, #f7f4ee 50%, var(--color-paper-2) 100%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
 
-@keyframes rise { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
-.animate-rise { animation: rise 260ms ease-out both; }
-
-@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 60%, transparent) } 100% { box-shadow: 0 0 0 14px transparent } }
-.animate-pulse-ring { animation: pulse-ring 900ms ease-out 2; }
-
-@keyframes dot { 0%, 80%, 100% { opacity: .25 } 40% { opacity: 1 } }
-.typing span { animation: dot 1.2s infinite; }
-.typing span:nth-child(2) { animation-delay: .15s }
-.typing span:nth-child(3) { animation-delay: .3s }
-
-.md p { @apply mb-2 last:mb-0; }
-.md strong { @apply text-white font-semibold; }
-.md code { @apply font-mono text-[0.85em] bg-white/10 rounded px-1; }
-.md ul { @apply list-disc pl-5 mb-2; }
-.md ol { @apply list-decimal pl-5 mb-2; }
-.md a { @apply text-accent underline; }
+.md p { @apply mb-3 last:mb-0; }
+.md strong { @apply font-semibold text-ink; }
+.md code { @apply font-mono text-[0.86em] bg-paper-2 px-1; }
+.md ul { @apply list-disc pl-5 mb-3; }
+.md ol { @apply list-decimal pl-5 mb-3; }
+.md h1, .md h2, .md h3 { @apply font-serif text-2xl mt-5 mb-2 first:mt-0; }
+.md a { @apply underline decoration-accent underline-offset-2; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
