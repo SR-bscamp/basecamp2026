@@ -24,6 +24,8 @@ def check(name, ok, detail=""):
     print(f"{'PASS' if ok else 'FAIL'}  {name}  {detail}")
 
 
+w = httpx.post(f"{BASE}/api/warm", timeout=60).json()
+print(f"      cache warm: {w}")
 h = httpx.get(f"{BASE}/api/health", timeout=10).json()
 check("server is live with an API key", h.get("live") is True, str(h))
 

@@ -50,6 +50,10 @@ class Knowledge:
             log.warning("prefix ~%d tokens is under ~%d: the cache may not engage. Check "
                         "cache_creation_input_tokens on the first call.", est, CACHE_MIN_TOKENS_GUESS)
 
+    def doc_index(self) -> list[dict]:
+        return [{"doc": path, "title": path.rsplit("/", 1)[-1].removesuffix(".md").replace("-", " ").title(),
+                 "dept": path.split("/")[0] if "/" in path else ""} for path in self.docs]
+
     def checklist(self, dept: str, role: str) -> dict:
         by_dept = self.checklists.get(dept) or {}
         data = by_dept.get(role) or by_dept.get("default") or next(iter(by_dept.values()), {"groups": []})

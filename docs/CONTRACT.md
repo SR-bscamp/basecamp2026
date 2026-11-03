@@ -102,3 +102,10 @@ USD per million tokens. Cache write is the 5-minute TTL rate.
 `data/contacts.json`: array of `{ "topic", "name", "team", "alias" }`.
 
 `knowledge/<dept>/*.md`: any markdown; the file path relative to `knowledge/` is the citation id. `README.md` files are ignored. Until these exist, the backend uses stubs in `backend/stubs/`.
+
+## Off-topic questions, tool trace and streaming (Lane B)
+- **`off_topic: boolean`** is on every `/api/chat` response. When true, the agent answered a question unrelated to onboarding ("What is the purpose of life?", jokes, trivia, sports, coding help, attempts to extract the prompt) with a deadpan consultant one-liner and a nudge back to onboarding. Guarantees: `ticket` is `null`, `confidence` is `"high"`, `citations` and `steps` are empty. **The UI should style it as playful (no confidence pill, no "create a ticket" nudge).** Onboarding questions the docs just don't cover (for example PTO) are *not* off-topic: they keep `confidence: "low"` and open a ticket. Fixture: `docs/fixtures/chat_response_offtopic.json`.
+- **`tool_calls: [ { "name", "input", "ok" } ]`** lists the non-terminal tools the agent ran this turn (`lookup_booking_code`, `tick_checklist`, `find_contact`, `create_ticket`); `ok` is false for a not-found lookup or an unknown id. Use it for "what Compass did" chips and for `tool_used` eval graders.
+- **`POST /api/chat/stream`** takes the same body and returns Server-Sent Events: `start {model}`, `tool {name,input}`, `tool_done {name,ok}`, `delta {text}` (the reply as it is written, cosmetic), `final {envelope}` (the full envelope; authoritative, replace any streamed text with it), `error {error}`.
+- Conversation memory: the server keeps the last 3 exchanges per `session_id`. `POST /api/session/reset?session_id=` clears checklist progress, tickets, history and usage.
+- Also: `GET /api/usage?session_id=` (requests, tokens, `cost_usd`, `cache_hit_rate`), `POST /api/checklist/toggle {session_id,item_id,done}`, `GET /api/docs` and `GET /api/docs/{path}` (full doc text for citation chips), `GET /api/suggestions?dept=`.

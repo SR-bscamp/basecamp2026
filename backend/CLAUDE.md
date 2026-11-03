@@ -31,3 +31,6 @@ backend/
 
 ## Verify before you say done
 Booking-code question calls the tool and returns the real code; unknown project returns not-found and the reply says so; a second identical request shows cache reads; the VPN-error PNG returns the right screen name.
+
+## Off-topic persona (implemented)
+Unrelated questions get a deadpan buzzword-consultant one-liner plus a nudge back to onboarding; the envelope sets `off_topic: true` and the backend enforces no ticket, high confidence, no citations. Undocumented *onboarding* questions are not off-topic. Rules live in `RULES` in `app/agent.py`; keep the two cases distinct when editing.
