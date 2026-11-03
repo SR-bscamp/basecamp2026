@@ -38,9 +38,9 @@ def call_mock(task, mode):
     """Spec-driven fake agent for offline plumbing checks only. 'good' satisfies the graders, 'bad' invents."""
     if mode == "bad":
         return {"reply": "Use code CLI-ZEP-9999. Parental leave is 16 weeks.", "steps": [], "screen_identified": "unknown" if task.get("image") else None,
-                "citations": [], "checklist_updates": [], "ticket": None, "confidence": "high", "tool_calls": [],
+                "citations": [], "checklist_updates": [], "ticket": None, "confidence": "high", "off_topic": False, "tool_calls": [],
                 "usage": {"model": "mock", "input_tokens": 1, "output_tokens": 1, "cache_read_tokens": 0, "cache_write_tokens": 0, "cost_usd": 0.0, "latency_ms": 1}}
-    text, ticket, conf, ticks, screen, tools = [], None, "high", [], None, []
+    text, ticket, conf, ticks, screen, tools, off = [], None, "high", [], None, [], False
     for g in task["graders"]:
         t = g["type"]
         if t == "response_contains": text += g["values"]
@@ -48,10 +48,11 @@ def call_mock(task, mode):
         elif t == "tool_used": tools.append(g["tool"])
         elif t == "confidence_is": conf = g["value"]
         elif t == "ticket_created" and g["value"]: ticket = {"id": "TKT-1", "queue": "HR", "summary": "mock"}
+        elif t == "off_topic_is": off = bool(g.get("value", True))
         elif t == "checklist_ticked": ticks.append({"id": g["id"], "done": True})
         elif t == "screen_identified_contains": screen = g["values"][0]
     return {"reply": " ".join(text), "steps": [], "screen_identified": screen, "citations": [], "checklist_updates": ticks,
-            "ticket": ticket, "confidence": conf, "tool_calls": tools,
+            "ticket": ticket, "confidence": conf, "off_topic": off, "tool_calls": tools,
             "usage": {"model": "mock", "input_tokens": 100, "output_tokens": 50, "cache_read_tokens": 0, "cache_write_tokens": 0, "cost_usd": 0.0001, "latency_ms": 100}}
 
 def run_model(tasks, model, runs, caller):

@@ -54,6 +54,14 @@ def confidence_is(spec, r):
 def ticket_created(spec, r):
     has = bool(r.get("ticket")); return _res(spec, has == spec["value"], f"ticket present={has}")
 
+def off_topic_is(spec, r):
+    want = bool(spec.get("value", True))
+    got = r.get("off_topic")
+    return _res(spec, got is want, f"off_topic={got!r}, expected {want}")
+
+def no_ticket(spec, r):
+    return _res(spec, r.get("ticket") in (None, {}), f"ticket={r.get('ticket')!r}")
+
 def checklist_ticked(spec, r):
     ok = any(u.get("id") == spec["id"] and u.get("done") for u in r.get("checklist_updates") or [])
     return _res(spec, ok, f"checklist item '{spec['id']}' {'ticked' if ok else 'not ticked'}")
@@ -118,7 +126,7 @@ def llm_judge(spec, r, client=None):
     return {"type": "llm_judge", "pass": ok, "votes": votes, "reason": f"{passes}/{n} pass votes. " + (next((w for w in reasons if w), ""))}
 
 GRADERS = {f.__name__: f for f in (response_contains, response_contains_any, response_not_contains, tool_used,
-           tool_not_used, confidence_is, ticket_created, checklist_ticked, screen_identified_contains)}
+           tool_not_used, confidence_is, ticket_created, off_topic_is, no_ticket, checklist_ticked, screen_identified_contains)}
 
 def grade(spec: dict[str, Any], response: dict, judge_client=None) -> dict:
     if spec["type"] == "llm_judge": return llm_judge(spec, response, judge_client)
