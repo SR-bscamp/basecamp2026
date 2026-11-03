@@ -6,6 +6,7 @@ import anthropic
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import config, suggestions
@@ -209,3 +210,8 @@ def doc_content(path: str):
 @app.get("/api/evals/latest")
 def evals_latest():
     return json.loads(config.EVAL_RESULTS.read_text(encoding="utf-8"))
+
+
+# The demo/pitch page: http://localhost:8000/demo/  (pulls live numbers from the endpoints above)
+if (config.ROOT / "demo").is_dir():
+    app.mount("/demo", StaticFiles(directory=config.ROOT / "demo", html=True), name="demo")

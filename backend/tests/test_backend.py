@@ -422,3 +422,8 @@ def test_variant_through_the_http_api(monkeypatch):
     r = TestClient(app).post("/api/chat", json={"message": "x", "variant": "nope"})
     assert r.status_code == 400 and "variant" in r.json()["error"].lower()
     assert TestClient(app).get("/api/health").json()["variants"] == ["final", "naive", "bad"]
+
+
+def test_demo_page_is_served():
+    r = TestClient(app).get("/demo/")
+    assert r.status_code == 200 and "Compass" in r.text and "/api/evals/latest" in r.text
