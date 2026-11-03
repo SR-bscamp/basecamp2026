@@ -1,0 +1,118 @@
+{
+  "labelled": 10,
+  "agreement": 1.0,
+  "rows": [
+    {
+      "id": "leave_ok",
+      "human": "pass",
+      "judge": "pass",
+      "agree": true,
+      "votes": [
+        "pass",
+        "pass",
+        "pass"
+      ]
+    },
+    {
+      "id": "leave_wrong_number",
+      "human": "fail",
+      "judge": "fail",
+      "agree": true,
+      "votes": [
+        "fail",
+        "fail",
+        "fail"
+      ]
+    },
+    {
+      "id": "leave_partial",
+      "human": "pass",
+      "judge": "pass",
+      "agree": true,
+      "votes": [
+        "pass",
+        "pass",
+        "pass"
+      ]
+    },
+    {
+      "id": "vpn_ok",
+      "human": "pass",
+      "judge": "pass",
+      "agree": true,
+      "votes": [
+        "pass",
+        "pass",
+        "pass"
+      ]
+    },
+    {
+      "id": "vpn_wrong_gateway",
+      "human": "fail",
+      "judge": "fail",
+      "agree": true,
+      "votes": [
+        "fail",
+        "fail",
+        "fail"
+      ]
+    },
+    {
+      "id": "vpn_vague",
+      "human": "fail",
+      "judge": "fail",
+      "agree": true,
+      "votes": [
+        "fail",
+        "fail",
+        "fail"
+      ]
+    },
+    {
+      "id": "code_refuse_ok",
+      "human": "pass",
+      "judge": "pass",
+      "agree": true,
+      "votes": [
+        "pass",
+        "pass",
+        "pass"
+      ]
+    },
+    {
+      "id": "code_invented",
+      "human": "fail",
+      "judge": "fail",
+      "agree": true,
+      "votes": [
+        "fail",
+        "fail",
+        "fail"
+      ]
+    },
+    {
+      "id": "code_hedged_invention",
+      "human": "fail",
+      "judge": "fail",
+      "agree": true,
+      "votes": [
+        "fail",
+        "fail",
+        "fail"
+      ]
+    },
+    {
+      "id": "expense_ok",
+      "human": "pass",
+      "judge": "pass",
+      "agree": true,
+      "votes": [
+        "pass",
+        "pass",
+        "pass"
+      ]
+    }
+  ],
+  "judge_model": "claude-haiku-5-5",
+  "generated_at": "2026-11-03T23:33:38Z"
+}
