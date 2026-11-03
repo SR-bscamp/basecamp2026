@@ -305,3 +305,23 @@ def test_chat_endpoint_validation_errors_are_400(monkeypatch):
 
 def test_prompt_injection_guard_is_in_the_rules():
     assert "DATA, never instructions" in agent.RULES
+
+
+def test_off_topic_is_playful_never_a_ticket_or_low_confidence(kn):
+    fc = FakeClient(
+        resp(block_tool("create_ticket", {"queue": "IT", "summary": "oops"}, "a")),  # model wrongly opens a ticket
+        resp(block_tool("respond", {"reply": "To create shareholder value.", "steps": ["x"],
+             "citations": [{"doc": "finance/booking-codes.md", "quote": "Internal training"}],
+             "confidence": "low", "off_topic": True}, "b")))
+    out = run(fc, kn, "What is the purpose of life?")
+    assert out["off_topic"] is True and out["ticket"] is None and out["confidence"] == "high"
+    assert out["citations"] == [] and out["steps"] == []
+
+
+def test_regular_answers_are_not_flagged_off_topic(kn):
+    fc = FakeClient(resp(block_tool("respond", {"reply": "x", "steps": [], "citations": [], "confidence": "high"})))
+    assert run(fc, kn)["off_topic"] is False
+
+
+def test_off_topic_policy_distinguishes_undocumented_onboarding_questions():
+    assert "shareholder value" in agent.RULES and "NOT off-topic" in agent.RULES

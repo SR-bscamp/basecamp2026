@@ -1,0 +1,20 @@
+{
+  "reply": "Per the Northwind strategic framework: to create shareholder value, ideally by end of quarter. Speaking of which, have you submitted your first timesheet yet?",
+  "steps": [],
+  "screen_identified": null,
+  "citations": [],
+  "checklist_updates": [],
+  "ticket": null,
+  "confidence": "high",
+  "off_topic": true,
+  "tool_calls": [],
+  "usage": {
+    "model": "claude-haiku-5-5",
+    "input_tokens": 410,
+    "output_tokens": 62,
+    "cache_read_tokens": 2210,
+    "cache_write_tokens": 0,
+    "cost_usd": 0.000125,
+    "latency_ms": 1100
+  }
+}

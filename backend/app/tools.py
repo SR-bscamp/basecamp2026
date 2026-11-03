@@ -71,14 +71,15 @@ TOOL_SPECS = [
             "(may be empty). citations lists the documents the answer relies on, each with the doc path "
             "exactly as shown in the documents and a short verbatim quote. confidence is 'low' when the "
             "documents do not support the answer. screen_identified names the screen shown in an uploaded "
-            "screenshot, otherwise null."),
+            "screenshot, otherwise null. off_topic is true only for questions unrelated to onboarding."),
         "input_schema": {"type": "object", "properties": {
             "reply": {"type": "string"},
             "steps": {"type": "array", "items": {"type": "string"}},
             "citations": {"type": "array", "items": {"type": "object", "properties": {
                 "doc": {"type": "string"}, "quote": {"type": "string"}}, "required": ["doc"]}},
             "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
-            "screen_identified": {"type": ["string", "null"]}},
+            "screen_identified": {"type": ["string", "null"]},
+            "off_topic": {"type": "boolean", "description": "True when the question has nothing to do with onboarding (see the off-topic rules)."}},
             "required": ["reply", "steps", "citations", "confidence"]},
     },
 ]
