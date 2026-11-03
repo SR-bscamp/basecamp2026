@@ -1,0 +1,88 @@
+# API contract (frozen at minute 10)
+
+Lane A builds against `docs/fixtures/chat_response.json`. Lane B returns exactly this shape. Change it only by telling both lanes.
+
+Base URL (dev): `http://localhost:8000`. Frontend dev server: `http://localhost:5173` (CORS allowed).
+
+## Departments
+`it`, `hr`, `consultants`, `finance` (display names: IT, HR, Consultants, Finance & Booking Codes).
+
+## Endpoints
+
+### `GET /api/health`
+`{ "ok": true, "model": "claude-haiku-4-5" }`
+
+### `GET /api/checklist?dept=consultants&role=analyst`
+```json
+{ "dept": "consultants", "role": "analyst",
+  "groups": [ { "id": "day1", "title": "Day 1", "items": [
+      { "id": "vpn", "title": "Set up VPN", "doc": "it/vpn-setup.md", "done": false } ] } ] }
+```
+
+### `POST /api/chat`
+Request (`multipart/form-data` or JSON; image optional, base64 in JSON):
+```json
+{ "session_id": "abc123", "dept": "consultants", "role": "analyst",
+  "message": "Which booking code do I use for internal training?",
+  "image_b64": null, "image_media_type": null,
+  "model": null }
+```
+Response (also the fixture shape):
+```json
+{
+  "reply": "Use **INT-TRN-001** for internal training time. ...",
+  "steps": ["Open the timesheet app", "Add a line with code INT-TRN-001"],
+  "screen_identified": null,
+  "citations": [ { "doc": "finance/booking-codes.md", "title": "Booking codes", "quote": "..." } ],
+  "checklist_updates": [ { "id": "timesheet", "done": true } ],
+  "ticket": null,
+  "confidence": "high",
+  "usage": { "model": "claude-haiku-4-5", "input_tokens": 120, "output_tokens": 180,
+             "cache_read_tokens": 5400, "cache_write_tokens": 0,
+             "cost_usd": 0.0011, "latency_ms": 1850 }
+}
+```
+- `model`: optional model id (see Pricing); `null` uses the backend default from `.env`.
+- `screen_identified`: string when an image was sent, else `null`.
+- `ticket`: `{ "id": "TKT-1001", "queue": "IT" | "HR", "summary": "..." }` or `null`.
+- `confidence`: `high | medium | low`. `low` means the answer should offer a ticket.
+- Errors: HTTP 4xx/5xx with `{ "error": "human readable" }`. The UI shows a toast and keeps the conversation.
+
+### `GET /api/tickets?session_id=abc123`
+`[ { "id": "TKT-1001", "queue": "IT", "summary": "...", "created_at": "ISO-8601" } ]`
+
+### `GET /api/evals/latest`
+Serves `eval_results/latest.json`:
+```json
+{
+  "generated_at": "ISO-8601", "model": "claude-haiku-4-5", "runs": 3,
+  "model_comparison": [ { "model": "claude-haiku-5-5", "pass_rate": 0.9, "avg_cost_usd": 0.0003, "p50_latency_ms": 1100 } ],
+  "variants": [ { "label": "naive prompt", "pass_rate": 0.48 },
+                { "label": "final prompt", "pass_rate": 0.92 },
+                { "label": "deliberately bad", "pass_rate": 0.12 } ],
+  "by_department": [ { "dept": "it", "passed": 7, "total": 8 } ],
+  "tasks": [ { "id": "bc_training", "dept": "finance", "pass_rate": 1.0, "flaky": false,
+               "checks": [ { "type": "tool_used", "pass": true, "reason": "..." } ] } ],
+  "judge_validation": { "labelled": 10, "agreement": 10 }
+}
+```
+
+## Conventions
+- Citations point at files under `knowledge/` (path relative to it).
+- IDs for checklist items are stable strings and appear in `data/checklists.json`.
+- Money in USD floats, latency in milliseconds, tokens as integers.
+- Never return raw model errors or the API key to the client.
+
+## Pricing (verified 2026-11-03 against platform.claude.com/docs/en/about-claude/pricing)
+USD per million tokens. Cache write is the 5-minute TTL rate.
+
+| Model id | Input | Output | Cache write (5m) | Cache read |
+|---|---|---|---|---|
+| `claude-haiku-5-5` (prompts ≤ 100K tokens) | 0.10 | 0.50 | 0.125 | 0.01 |
+| `claude-haiku-4-5` | 1.00 | 5.00 | 1.25 | 0.10 |
+| `claude-sonnet-5-5` | 2.00 | 10.00 | 2.50 | 0.10 |
+| `claude-sonnet-5` | 2.00 | 10.00 | 2.50 | 0.20 |
+| `claude-opus-5-5` | 4.00 | 20.00 | 5.00 | 0.20 |
+| `claude-opus-4-8` | 5.00 | 25.00 | 6.25 | 0.50 |
+
+`cost_usd = (input_tokens·in + cache_write·write + cache_read·read + output_tokens·out) / 1e6`. Footnotes on the 5.5 cache-read prices were not checked; confirm against usage at runtime. The minimum cacheable prefix for the 5.5 models was not found in the pricing page: verify with `cache_creation_input_tokens` on the first call (B2).

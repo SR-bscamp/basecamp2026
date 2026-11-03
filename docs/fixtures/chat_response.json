@@ -1,0 +1,30 @@
+{
+  "reply": "Use **INT-TRN-001** for internal training time. Training counts as non-billable, so it will not hit a client invoice. If your training is client-funded, ask your engagement manager for the client code instead.",
+  "steps": [
+    "Open the timesheet app and choose this week",
+    "Add a new line and enter code INT-TRN-001",
+    "Enter the hours and submit before Friday 5pm"
+  ],
+  "screen_identified": null,
+  "citations": [
+    {
+      "doc": "finance/booking-codes.md",
+      "title": "Booking codes",
+      "quote": "Internal training: INT-TRN-001 (non-billable)."
+    }
+  ],
+  "checklist_updates": [
+    { "id": "timesheet", "done": true }
+  ],
+  "ticket": null,
+  "confidence": "high",
+  "usage": {
+    "model": "claude-haiku-4-5",
+    "input_tokens": 142,
+    "output_tokens": 171,
+    "cache_read_tokens": 5400,
+    "cache_write_tokens": 0,
+    "cost_usd": 0.0011,
+    "latency_ms": 1850
+  }
+}
