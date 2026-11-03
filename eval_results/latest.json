@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-11-03T23:25:21Z",
+  "generated_at": "2026-11-03T23:37:29Z",
   "model": "claude-haiku-5-5",
   "runs": 3,
   "model_comparison": [
     {
       "model": "claude-haiku-5-5",
-      "pass_rate": 0.8571,
-      "avg_cost_usd": 0.000663,
-      "p50_latency_ms": 3114
+      "pass_rate": 0.7937,
+      "avg_cost_usd": 0.000931,
+      "p50_latency_ms": 4367
     },
     {
       "model": "claude-haiku-4-5",
@@ -31,7 +31,7 @@
   "variants": [
     {
       "label": "final prompt",
-      "pass_rate": 0.8571
+      "pass_rate": 0.7937
     }
   ],
   "by_department": [
@@ -42,12 +42,12 @@
     },
     {
       "dept": "it",
-      "passed": 3,
+      "passed": 2,
       "total": 5
     },
     {
       "dept": "hr",
-      "passed": 4,
+      "passed": 2,
       "total": 4
     },
     {
@@ -255,8 +255,8 @@
     {
       "id": "abstain_parental_leave",
       "dept": "hr",
-      "pass_rate": 1.0,
-      "flaky": false,
+      "pass_rate": 0.3333,
+      "flaky": true,
       "checks": [
         {
           "type": "response_contains_any",
@@ -270,8 +270,8 @@
         },
         {
           "type": "ticket_created",
-          "pass": true,
-          "reason": "ticket present=True"
+          "pass": false,
+          "reason": "ticket present=False"
         },
         {
           "type": "response_not_contains",
@@ -311,13 +311,13 @@
     {
       "id": "abstain_office_wifi",
       "dept": "it",
-      "pass_rate": 1.0,
-      "flaky": false,
+      "pass_rate": 0.6667,
+      "flaky": true,
       "checks": [
         {
           "type": "response_contains_any",
           "pass": true,
-          "reason": "Found 'don't have'"
+          "reason": "Found 'don't know'"
         },
         {
           "type": "confidence_is",
@@ -326,8 +326,8 @@
         },
         {
           "type": "ticket_created",
-          "pass": true,
-          "reason": "ticket present=True"
+          "pass": false,
+          "reason": "ticket present=False"
         }
       ]
     },
@@ -340,7 +340,7 @@
         {
           "type": "screen_identified_contains",
           "pass": true,
-          "reason": "screen_identified='Northwind Secure Connect - Connection failed (809)'"
+          "reason": "screen_identified='Northwind Secure Connect: Connection failed (809)'"
         },
         {
           "type": "checklist_ticked",
@@ -363,7 +363,7 @@
         {
           "type": "screen_identified_contains",
           "pass": true,
-          "reason": "screen_identified='MFA enrollment screen: \"Set up multi-factor authentication\", Step 1 of 3 (Add this account in the app)'"
+          "reason": "screen_identified='Northwind Account Portal: Set up multi-factor authentication (MFA enrollment, Step 1 of 3)'"
         },
         {
           "type": "checklist_ticked",
@@ -386,7 +386,7 @@
         {
           "type": "screen_identified_contains",
           "pass": true,
-          "reason": "screen_identified='Northwind Timesheets - weekly timesheet showing \"Invalid booking code: line not saved\" error'"
+          "reason": "screen_identified='Northwind Timesheets - week of Mon 3 Nov (invalid booking code error)'"
         },
         {
           "type": "checklist_ticked",
@@ -500,8 +500,8 @@
     {
       "id": "offcontrast_stipend",
       "dept": "hr",
-      "pass_rate": 1.0,
-      "flaky": false,
+      "pass_rate": 0.6667,
+      "flaky": true,
       "checks": [
         {
           "type": "off_topic_is",
@@ -515,14 +515,14 @@
         },
         {
           "type": "tool_used",
-          "pass": true,
-          "reason": "create_ticket was called"
+          "pass": false,
+          "reason": "create_ticket was not called"
         }
       ]
     }
   ],
   "judge_validation": {
-    "labelled": 0,
-    "agreement": 0
+    "labelled": 10,
+    "agreement": 1.0
   }
 }

@@ -90,7 +90,7 @@ Use the 3-minute script in `docs/PLAN.md` section 2 (Consultants > Analyst, book
 - [x] Plan, contract, tickets, fixtures
 - [ ] Lane A P0: picker, checklist, chat UI, upload
 - [ ] Lane B P0: API, agent + tools, screenshot path, guardrails
-- [x] Lane C P0: data, core docs, screenshots, 16 eval tasks, runner (runner and graders verified offline with the mock agent only; no live run yet)
-- [x] Lane C P1: extra docs (C1b), LLM judge grader + labelled examples + validation script (C6; plumbing tested offline, agreement not yet measured: `judge_validation` stays 0/0)
-- [ ] Lane C: live eval runs, model matrix and prompt variants (C5b, needs backend `tool_calls` + variant switch), backup video (C7)
+- [x] Lane C P0: data, core docs, screenshots, 21 eval tasks, runner (live run done: Haiku 5.5 about 79-86% over 3 runs; see Quality tab / `eval_results/latest.json`)
+- [x] Lane C P1: extra docs (C1b), LLM judge (C6; 10/10 agreement on 10 labelled examples, labels drafted by Claude and awaiting human review)
+- [ ] Lane C: prompt variants (naive/bad; needs a backend variant switch), backup video (C7). Model matrix (4 models x 3 runs) is done.
 - [ ] Integration at minute 40, feature freeze at minute 50, rehearsal at 55
