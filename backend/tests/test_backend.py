@@ -437,3 +437,19 @@ def test_ui_role_names_map_to_checklist_roles():
     assert k.checklist("hr", "Recruiter")["groups"][0]["id"] == "R"
     assert k.checklist("it", "engineer")["groups"][0]["id"] == "E"
     assert k.checklist("it", "totally-unknown")["groups"][0]["id"] == "E"  # falls back to the first role
+
+
+def test_history_records_actions_so_later_turns_never_doubt_earlier_ones(kn):
+    store = Store()
+    fc = FakeClient(
+        resp(block_tool("create_ticket", {"queue": "HR", "summary": "parental leave"}, "a"),
+             block_tool("lookup_booking_code", {"query": "zzz"}, "b")),
+        resp(block_tool("respond", {"reply": "I don't know; I opened a ticket.", "steps": [], "citations": [], "confidence": "low"}, "c")))
+    agent.run_chat(fc, kn, store, session_id="rec", dept="hr", role="x", message="parental leave?")
+    stored = store.get("rec").history[-1]["content"]
+    assert "I don't know; I opened a ticket." in stored
+    assert "Record of what you did" in stored and "opened ticket TKT-" in stored and "no match" in stored
+    follow = FakeClient(resp(block_tool("respond", {"reply": "ok", "steps": [], "citations": [], "confidence": "high", "off_topic": True})))
+    agent.run_chat(follow, kn, store, session_id="rec", dept="hr", role="x", message="purpose of life?")
+    assert "Record of what you did" in str(follow.calls[0]["messages"][1]["content"])
+    assert "answer ONLY the latest user message" in agent.RULES
