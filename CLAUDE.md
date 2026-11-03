@@ -5,6 +5,8 @@ Shared instructions for every teammate's Claude Code session in this repo. Lane 
 ## What we're building
 **Compass**: a department-aware onboarding copilot (IT, HR, Consultants, Finance & Booking Codes). Pick a department, get a checklist, chat with an agent grounded in mock docs (with citations), upload a screenshot and get told what to do, and see a Quality tab that proves it works (eval suite + model comparison). 60-minute hackathon, team of three.
 
+> **Lane A (frontend): read `docs/FRONTEND_FEEDBACK.md` before your next change.** The current UI needs a full visual redo.
+
 ## Read in this order
 1. `docs/PLAN.md` — the idea, demo script, architecture, scope tiers (P0/P1/P2)
 2. `docs/CONTRACT.md` — the **frozen API contract**, JSON shapes, model pricing
