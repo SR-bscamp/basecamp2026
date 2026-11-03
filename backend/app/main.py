@@ -2,6 +2,7 @@
 import json
 import logging
 
+import anthropic
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -58,6 +59,19 @@ def _error(status: int, message: str) -> JSONResponse:
     return JSONResponse(status_code=status, content={"error": message})
 
 
+def _api_error(e: Exception) -> JSONResponse:
+    """Map model/API failures to friendly messages. Never leak raw errors or keys to the client."""
+    if isinstance(e, anthropic.RateLimitError):
+        return _error(429, "Compass is getting a lot of questions right now. Give it a few seconds and try again.")
+    if isinstance(e, anthropic.AuthenticationError):
+        return _error(500, "The server's API key was rejected. Ask the backend owner to check .env.")
+    if isinstance(e, (anthropic.APIConnectionError, anthropic.APITimeoutError)):
+        return _error(503, "Couldn't reach the AI service. Check the network and try again.")
+    if isinstance(e, anthropic.APIStatusError) and e.status_code in (500, 502, 503, 529):
+        return _error(503, "The AI service is overloaded at the moment. Please try again shortly.")
+    return _error(502, "The assistant hit a problem answering that. Please try again.")
+
+
 def _chat_kwargs(req: ChatRequest) -> dict:
     return dict(session_id=req.session_id, dept=req.dept, role=req.role, message=req.message,
                 image_b64=req.image_b64, image_media_type=req.image_media_type, model=req.model)
@@ -108,9 +122,9 @@ def chat(req: ChatRequest, mock: int = Query(0)):
         envelope = run_chat(client, knowledge, store, **_chat_kwargs(req))
     except ValueError as e:
         return _error(400, str(e))
-    except Exception:  # never leak raw model/stack errors to the client
+    except Exception as e:  # never leak raw model/stack errors to the client
         log.exception("chat failed")
-        return _error(502, "The assistant hit a problem answering that. Please try again.")
+        return _api_error(e)
     u = envelope["usage"]
     log.info("chat model=%s in=%d out=%d cache_read=%d cost=$%.5f %dms tools=%s", u["model"], u["input_tokens"],
              u["output_tokens"], u["cache_read_tokens"], u["cost_usd"], u["latency_ms"],
@@ -135,12 +149,30 @@ def chat_stream(req: ChatRequest):
                 yield _sse(ev["type"], ev)
         except ValueError as e:
             yield _sse("error", {"type": "error", "error": str(e)})
-        except Exception:
+        except Exception as e:
             log.exception("chat stream failed")
-            yield _sse("error", {"type": "error", "error": "The assistant hit a problem answering that. Please try again."})
+            yield _sse("error", {"type": "error", "error": json.loads(_api_error(e).body)["error"]})
 
     return StreamingResponse(gen(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.post("/api/warm")
+def warm():
+    """Write the prompt cache (max_tokens=1) so the first real question is a cache hit. Cache TTL is 5 minutes."""
+    if client is None:
+        return _error(503, "The server has no API key configured.")
+    try:
+        r = client.messages.create(
+            model=config.DEFAULT_MODEL, max_tokens=1, tools=TOOL_SPECS, messages=[{"role": "user", "content": "hi"}],
+            system=[{"type": "text", "text": RULES},
+                    {"type": "text", "text": knowledge.prefix, "cache_control": {"type": "ephemeral"}}])
+    except Exception as e:
+        log.exception("warm failed")
+        return _api_error(e)
+    u = r.usage
+    return {"ok": True, "model": config.DEFAULT_MODEL, "cache_write_tokens": getattr(u, "cache_creation_input_tokens", 0) or 0,
+            "cache_read_tokens": getattr(u, "cache_read_input_tokens", 0) or 0}
 
 
 @app.get("/api/tickets")

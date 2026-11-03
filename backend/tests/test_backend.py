@@ -325,3 +325,33 @@ def test_regular_answers_are_not_flagged_off_topic(kn):
 
 def test_off_topic_policy_distinguishes_undocumented_onboarding_questions():
     assert "shareholder value" in agent.RULES and "NOT off-topic" in agent.RULES
+
+
+# ---------------------------------------------------------------- friendly errors and warm
+
+def _status_error(cls, code):
+    import httpx
+    req = httpx.Request("POST", "http://x")
+    return cls("boom secret-detail", response=httpx.Response(code, request=req), body=None)
+
+
+@pytest.mark.parametrize("cls,code,expect_status", [
+    ("RateLimitError", 429, 429), ("AuthenticationError", 401, 500), ("InternalServerError", 529, 503)])
+def test_api_errors_are_mapped_to_friendly_messages(monkeypatch, cls, code, expect_status):
+    import anthropic
+    import app.main as m
+    err = _status_error(getattr(anthropic, cls), code)
+
+    class Boom:
+        messages = NS(create=lambda **kw: (_ for _ in ()).throw(err))
+    monkeypatch.setattr(m, "client", Boom())
+    r = TestClient(app).post("/api/chat", json={"message": "x"})
+    assert r.status_code == expect_status and "secret-detail" not in r.text and "error" in r.json()
+
+
+def test_warm_endpoint_reports_cache_usage(monkeypatch):
+    import app.main as m
+    u = NS(input_tokens=5, output_tokens=1, cache_creation_input_tokens=2210, cache_read_input_tokens=0)
+    monkeypatch.setattr(m, "client", FakeClient(NS(content=[], usage=u, stop_reason="end_turn")))
+    out = TestClient(app).post("/api/warm").json()
+    assert out["ok"] is True and out["cache_write_tokens"] == 2210

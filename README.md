@@ -33,9 +33,10 @@ If your shell exports `ANTHROPIC_BASE_URL` for another tool, unset it for this p
 
 ## Run (available as the lane tickets land)
 ```bash
-# backend (after ticket B1)
-cd backend && python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt && uvicorn app.main:app --reload --port 8000
+# backend (Lane B: ready). Creates its venv on first run, serves on :8000
+./backend/run.sh
+curl -X POST localhost:8000/api/warm          # pre-warm the prompt cache before a demo
+backend/.venv/bin/python backend/scripts/smoke.py   # live pre-flight check (needs the key in .env)
 
 # frontend (after ticket A1)
 cd frontend && npm install && npm run dev      # http://localhost:5173
@@ -59,7 +60,7 @@ eval_results/      latest.json (sample data until C5 runs)
 
 ## Status
 - [x] Plan, contract, tickets, fixtures
-- [ ] Lane A P0: picker, checklist, chat UI, upload
-- [ ] Lane B P0: API, agent + tools, screenshot path, guardrails
+- [ ] Lane A: visual redo + backend wiring (see docs/FRONTEND_FEEDBACK.md)
+- [x] Lane B: API, agent + tools, screenshots, guardrails, streaming, memory, off-topic persona (31 tests, verified live)
 - [ ] Lane C P0: data, core docs, screenshots, 12 eval tasks, runner
 - [ ] Integration at minute 40, feature freeze at minute 50, rehearsal at 55
