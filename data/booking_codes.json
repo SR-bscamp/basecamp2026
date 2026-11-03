@@ -1,0 +1,142 @@
+{
+  "_note": "Fictional Northwind Advisory data. Exact lookup only; unknown projects have no code.",
+  "codes": [
+    {
+      "project": "Internal training",
+      "code": "INT-TRN-001",
+      "billable": false,
+      "owner": "People & Learning",
+      "aliases": [
+        "training",
+        "learning",
+        "courses",
+        "certification",
+        "internal training"
+      ]
+    },
+    {
+      "project": "Bench / between projects",
+      "code": "INT-BEN-001",
+      "billable": false,
+      "owner": "Resource Management",
+      "aliases": [
+        "bench",
+        "unassigned",
+        "between projects"
+      ]
+    },
+    {
+      "project": "Internal administration",
+      "code": "INT-ADM-001",
+      "billable": false,
+      "owner": "Finance Operations",
+      "aliases": [
+        "admin",
+        "internal meetings",
+        "all-hands",
+        "onboarding"
+      ]
+    },
+    {
+      "project": "Business development and proposals",
+      "code": "INT-BD-001",
+      "billable": false,
+      "owner": "Practice Leads",
+      "aliases": [
+        "bd",
+        "proposals",
+        "pitch",
+        "pre-sales"
+      ]
+    },
+    {
+      "project": "Public holiday and paid leave",
+      "code": "INT-PTO-001",
+      "billable": false,
+      "owner": "HR Operations",
+      "aliases": [
+        "pto",
+        "holiday",
+        "vacation",
+        "leave"
+      ]
+    },
+    {
+      "project": "Alder Creek Foods - Supply Chain Redesign",
+      "code": "CLI-ALD-2401",
+      "billable": true,
+      "owner": "Engagement Manager, Retail & Consumer",
+      "aliases": [
+        "alder creek",
+        "alder creek foods",
+        "supply chain redesign"
+      ]
+    },
+    {
+      "project": "Bluepeak Utilities - Grid Data Platform",
+      "code": "CLI-BLU-2402",
+      "billable": true,
+      "owner": "Engagement Manager, Energy & Utilities",
+      "aliases": [
+        "bluepeak",
+        "bluepeak utilities",
+        "grid data platform"
+      ]
+    },
+    {
+      "project": "Cedarline Insurance - Claims Automation",
+      "code": "CLI-CED-2403",
+      "billable": true,
+      "owner": "Engagement Manager, Financial Services",
+      "aliases": [
+        "cedarline",
+        "cedarline insurance",
+        "claims automation"
+      ]
+    },
+    {
+      "project": "Dunmore Retail Group - Store Analytics",
+      "code": "CLI-DUN-2404",
+      "billable": true,
+      "owner": "Engagement Manager, Retail & Consumer",
+      "aliases": [
+        "dunmore",
+        "dunmore retail",
+        "store analytics"
+      ]
+    },
+    {
+      "project": "Eastgate Health Trust - Patient Flow Study",
+      "code": "CLI-EAS-2405",
+      "billable": true,
+      "owner": "Engagement Manager, Health",
+      "aliases": [
+        "eastgate",
+        "eastgate health",
+        "patient flow"
+      ]
+    },
+    {
+      "project": "Fernhill Logistics - Network Optimisation",
+      "code": "CLI-FER-2406",
+      "billable": true,
+      "owner": "Engagement Manager, Operations",
+      "aliases": [
+        "fernhill",
+        "fernhill logistics",
+        "network optimisation"
+      ]
+    },
+    {
+      "project": "Northwind Quality Review (internal audit support)",
+      "code": "INT-QA-001",
+      "billable": false,
+      "owner": "Quality & Risk",
+      "aliases": [
+        "quality review",
+        "internal audit",
+        "qa"
+      ]
+    }
+  ]
+}

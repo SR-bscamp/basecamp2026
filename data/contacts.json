@@ -1,0 +1,81 @@
+{
+  "_note": "Teams only; no individuals. Ticket queues for create_ticket are IT or HR.",
+  "contacts": [
+    {
+      "id": "it_helpdesk",
+      "name": "IT Helpdesk",
+      "queue": "IT",
+      "email": "helpdesk@northwind-advisory.example",
+      "phone": "ext 4000",
+      "hours": "Mon-Fri 7am-7pm ET",
+      "topics": [
+        "vpn",
+        "mfa",
+        "laptop",
+        "password",
+        "access",
+        "login",
+        "authenticator",
+        "network"
+      ]
+    },
+    {
+      "id": "benefits",
+      "name": "HR Benefits Team",
+      "queue": "HR",
+      "email": "benefits@northwind-advisory.example",
+      "phone": "ext 4200",
+      "hours": "Mon-Fri 9am-5pm ET",
+      "topics": [
+        "benefits",
+        "health insurance",
+        "dental",
+        "retirement",
+        "enrollment"
+      ]
+    },
+    {
+      "id": "hr_general",
+      "name": "HR People Team",
+      "queue": "HR",
+      "email": "people@northwind-advisory.example",
+      "phone": "ext 4100",
+      "hours": "Mon-Fri 9am-5pm ET",
+      "topics": [
+        "hr",
+        "leave",
+        "policy",
+        "payroll question",
+        "employment"
+      ]
+    },
+    {
+      "id": "timesheets",
+      "name": "Finance Operations",
+      "queue": "Finance",
+      "email": "timesheets@northwind-advisory.example",
+      "phone": "ext 4300",
+      "hours": "Mon-Fri 9am-5pm ET",
+      "topics": [
+        "timesheet",
+        "booking code",
+        "time entry",
+        "invoicing"
+      ]
+    },
+    {
+      "id": "resource_mgmt",
+      "name": "Resource Management",
+      "queue": "Consultants",
+      "email": "staffing@northwind-advisory.example",
+      "phone": "ext 4400",
+      "hours": "Mon-Fri 9am-5pm ET",
+      "topics": [
+        "staffing",
+        "project assignment",
+        "bench",
+        "engagement manager"
+      ]
+    }
+  ]
+}
