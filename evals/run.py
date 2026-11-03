@@ -86,6 +86,13 @@ def by_department(task_results):
         x = d.setdefault(t["dept"], {"dept": t["dept"], "passed": 0, "total": 0}); x["total"] += 1; x["passed"] += t["pass_rate"] == 1.0
     return list(d.values())
 
+def load_judge_validation(mock=False):
+    """Real result of evals/validate_judge.py if it was ever run; otherwise the honest default (nothing validated)."""
+    default = {"labelled": 0, "agreement": 0}
+    try: d = json.loads((ROOT / "eval_results" / "judge_validation.json").read_text())
+    except (OSError, json.JSONDecodeError): return default
+    return default if mock else {"labelled": d["labelled"], "agreement": d["agreement"]}
+
 def merge_existing(path, new):
     """Keep earlier REAL measurements (variants / model_comparison) when updating; never merge fixture data."""
     try: old = json.loads(Path(path).read_text())
@@ -123,7 +130,7 @@ def main(argv=None):
            "model_comparison": comp, "variants": [{"label": a.label, "pass_rate": hs["pass_rate"]}],
            "by_department": by_department(head),
            "tasks": [{k: v for k, v in t.items() if k != "_usages"} for t in head],
-           "judge_validation": {"labelled": 0, "agreement": 0}}
+           "judge_validation": load_judge_validation(a.mock)}
     if a.mock: res["_mock"] = True
     elif a.merge: res = merge_existing(out_path, res)
     out_path.write_text(json.dumps(res, indent=2) + "\n")

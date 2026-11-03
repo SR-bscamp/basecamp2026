@@ -6,6 +6,7 @@ additive field `tool_calls` (list of names or {"name":...}); if absent it is inf
 cannot be inferred: they fail with an explicit reason until the backend returns `tool_calls`.
 """
 from __future__ import annotations
+import json, os, re
 from typing import Any
 
 def response_text(r: dict) -> str:
@@ -62,12 +63,67 @@ def screen_identified_contains(spec, r):
     ok = bool(hit) if spec.get("mode", "any") == "any" else len(hit) == len(spec["values"])
     return _res(spec, ok, f"screen_identified={r.get('screen_identified')!r}")
 
+# ---- LLM judge (P1) -------------------------------------------------------------------------------------
+# Each check carries its own ground truth (the judge never sees the docs). Output schema puts `reason`
+# BEFORE `verdict` so the model reasons first. 3 votes, majority wins. Model is configurable via
+# spec["judge_model"] or env JUDGE_MODEL. Live calls happen only when ANTHROPIC_API_KEY is set (or a client
+# is injected, which is how the unit tests run offline).
+DEFAULT_JUDGE_MODEL = "claude-haiku-5-5"
+JUDGE_SYSTEM = ("You are a strict grader of an onboarding assistant's answer. You see only the answer and the ground truth "
+                "given to you. Judge whether the answer satisfies the criterion given the ground truth. An answer that "
+                "contradicts the ground truth, invents facts not in it, or is evasive about the criterion FAILS. "
+                'Reply with JSON only, keys in this order: {"reason": "<one or two sentences>", "verdict": "pass" | "fail"}.')
+
+def judge_model(spec: dict) -> str:
+    return spec.get("judge_model") or os.environ.get("JUDGE_MODEL") or DEFAULT_JUDGE_MODEL
+
+def make_judge_client():
+    """Real Anthropic client, or None when no key / SDK (callers then report the judge as unavailable)."""
+    if not os.environ.get("ANTHROPIC_API_KEY"): return None
+    try:
+        import anthropic
+    except ImportError:
+        return None
+    return anthropic.Anthropic()
+
+def _judge_prompt(spec: dict, r: dict) -> str:
+    return (f"CRITERION: {spec['criterion']}\nGROUND TRUTH: {spec['ground_truth']}\n\n"
+            f"ANSWER TO GRADE:\n{r.get('reply') or ''}\n" + ("STEPS: " + " | ".join(r["steps"]) + "\n" if r.get("steps") else ""))
+
+def _parse_verdict(text: str) -> tuple[str | None, str]:
+    m = re.search(r"\{.*\}", text, re.S)
+    try:
+        d = json.loads(m.group(0)) if m else {}
+    except json.JSONDecodeError:
+        d = {}
+    v = str(d.get("verdict", "")).strip().lower()
+    return (v if v in ("pass", "fail") else None), str(d.get("reason", ""))
+
+def llm_judge(spec, r, client=None):
+    """spec: {"type":"llm_judge","criterion":..., "ground_truth":..., "votes":3 (optional), "judge_model":... (optional)}"""
+    client = client or make_judge_client()
+    if client is None:
+        return {"type": "llm_judge", "pass": False, "skipped": True, "reason": "judge unavailable: no ANTHROPIC_API_KEY (or injected client)"}
+    votes, reasons = [], []
+    for _ in range(int(spec.get("votes", 3))):
+        try:
+            msg = client.messages.create(model=judge_model(spec), max_tokens=300, system=JUDGE_SYSTEM,
+                                         messages=[{"role": "user", "content": _judge_prompt(spec, r)}])
+            v, why = _parse_verdict("".join(getattr(b, "text", "") for b in msg.content))
+        except Exception as e:  # network / API errors count as an invalid vote, never as a pass
+            v, why = None, f"{type(e).__name__}"
+        votes.append(v); reasons.append(why)
+    passes = votes.count("pass"); n = len(votes)
+    ok = passes * 2 > n  # strict majority of ALL votes; invalid votes count against passing
+    return {"type": "llm_judge", "pass": ok, "votes": votes, "reason": f"{passes}/{n} pass votes. " + (next((w for w in reasons if w), ""))}
+
 GRADERS = {f.__name__: f for f in (response_contains, response_contains_any, response_not_contains, tool_used,
            tool_not_used, confidence_is, ticket_created, checklist_ticked, screen_identified_contains)}
 
-def grade(spec: dict[str, Any], response: dict) -> dict:
+def grade(spec: dict[str, Any], response: dict, judge_client=None) -> dict:
+    if spec["type"] == "llm_judge": return llm_judge(spec, response, judge_client)
     fn = GRADERS.get(spec["type"])
-    if fn is None: return {"type": spec["type"], "pass": False, "reason": "unknown grader type (llm_judge is P1, not implemented)"}
+    if fn is None: return {"type": spec["type"], "pass": False, "reason": "unknown grader type"}
     return fn(spec, response)
 
-def grade_all(specs, response): return [grade(s, response) for s in specs]
+def grade_all(specs, response, judge_client=None): return [grade(s, response, judge_client) for s in specs]
