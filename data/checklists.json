@@ -1,9 +1,6 @@
 {
-  "_note": "Array of entries matching GET /api/checklist response shape; select by dept+role.",
-  "checklists": [
-    {
-      "dept": "consultants",
-      "role": "analyst",
+  "consultants": {
+    "analyst": {
       "groups": [
         {
           "id": "day1",
@@ -61,9 +58,7 @@
         }
       ]
     },
-    {
-      "dept": "consultants",
-      "role": "manager",
+    "manager": {
       "groups": [
         {
           "id": "day1",
@@ -121,9 +116,67 @@
         }
       ]
     },
-    {
-      "dept": "it",
-      "role": "engineer",
+    "default": {
+      "groups": [
+        {
+          "id": "day1",
+          "title": "Day 1",
+          "items": [
+            {
+              "id": "mfa",
+              "title": "Enroll in MFA",
+              "doc": "it/mfa-setup.md",
+              "done": false
+            },
+            {
+              "id": "vpn",
+              "title": "Set up VPN",
+              "doc": "it/vpn-setup.md",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "week1",
+          "title": "Week 1",
+          "items": [
+            {
+              "id": "first_week",
+              "title": "Read the first-week guide",
+              "doc": "consultants/first-week.md",
+              "done": false
+            },
+            {
+              "id": "booking_codes",
+              "title": "Learn the booking codes",
+              "doc": "finance/booking-codes.md",
+              "done": false
+            },
+            {
+              "id": "timesheet",
+              "title": "Submit your first timesheet",
+              "doc": "finance/timesheets.md",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "month1",
+          "title": "Month 1",
+          "items": [
+            {
+              "id": "benefits",
+              "title": "Enroll in benefits",
+              "doc": "hr/benefits-enrollment.md",
+              "done": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "it": {
+    "engineer": {
       "groups": [
         {
           "id": "day1",
@@ -175,9 +228,7 @@
         }
       ]
     },
-    {
-      "dept": "it",
-      "role": "helpdesk",
+    "helpdesk": {
       "groups": [
         {
           "id": "day1",
@@ -229,9 +280,61 @@
         }
       ]
     },
-    {
-      "dept": "hr",
-      "role": "generalist",
+    "default": {
+      "groups": [
+        {
+          "id": "day1",
+          "title": "Day 1",
+          "items": [
+            {
+              "id": "mfa",
+              "title": "Enroll in MFA",
+              "doc": "it/mfa-setup.md",
+              "done": false
+            },
+            {
+              "id": "vpn",
+              "title": "Set up VPN",
+              "doc": "it/vpn-setup.md",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "week1",
+          "title": "Week 1",
+          "items": [
+            {
+              "id": "first_week",
+              "title": "Read the first-week guide",
+              "doc": "consultants/first-week.md",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "month1",
+          "title": "Month 1",
+          "items": [
+            {
+              "id": "benefits",
+              "title": "Enroll in benefits",
+              "doc": "hr/benefits-enrollment.md",
+              "done": false
+            },
+            {
+              "id": "timesheet",
+              "title": "Submit your first timesheet",
+              "doc": "finance/timesheets.md",
+              "done": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "hr": {
+    "generalist": {
       "groups": [
         {
           "id": "day1",
@@ -283,9 +386,7 @@
         }
       ]
     },
-    {
-      "dept": "hr",
-      "role": "recruiter",
+    "recruiter": {
       "groups": [
         {
           "id": "day1",
@@ -343,9 +444,61 @@
         }
       ]
     },
-    {
-      "dept": "finance",
-      "role": "analyst",
+    "default": {
+      "groups": [
+        {
+          "id": "day1",
+          "title": "Day 1",
+          "items": [
+            {
+              "id": "mfa",
+              "title": "Enroll in MFA",
+              "doc": "it/mfa-setup.md",
+              "done": false
+            },
+            {
+              "id": "vpn",
+              "title": "Set up VPN",
+              "doc": "it/vpn-setup.md",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "week1",
+          "title": "Week 1",
+          "items": [
+            {
+              "id": "benefits",
+              "title": "Enroll in benefits",
+              "doc": "hr/benefits-enrollment.md",
+              "done": false
+            },
+            {
+              "id": "first_week",
+              "title": "Read the first-week guide",
+              "doc": "consultants/first-week.md",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "month1",
+          "title": "Month 1",
+          "items": [
+            {
+              "id": "timesheet",
+              "title": "Submit your first timesheet",
+              "doc": "finance/timesheets.md",
+              "done": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "finance": {
+    "analyst": {
       "groups": [
         {
           "id": "day1",
@@ -403,9 +556,65 @@
         }
       ]
     },
-    {
-      "dept": "finance",
-      "role": "controller",
+    "controller": {
+      "groups": [
+        {
+          "id": "day1",
+          "title": "Day 1",
+          "items": [
+            {
+              "id": "mfa",
+              "title": "Enroll in MFA",
+              "doc": "it/mfa-setup.md",
+              "done": false
+            },
+            {
+              "id": "vpn",
+              "title": "Set up VPN",
+              "doc": "it/vpn-setup.md",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "week1",
+          "title": "Week 1",
+          "items": [
+            {
+              "id": "booking_codes",
+              "title": "Learn the booking codes",
+              "doc": "finance/booking-codes.md",
+              "done": false
+            },
+            {
+              "id": "timesheet",
+              "title": "Submit your first timesheet",
+              "doc": "finance/timesheets.md",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "month1",
+          "title": "Month 1",
+          "items": [
+            {
+              "id": "benefits",
+              "title": "Enroll in benefits",
+              "doc": "hr/benefits-enrollment.md",
+              "done": false
+            },
+            {
+              "id": "first_week",
+              "title": "Read the first-week guide",
+              "doc": "consultants/first-week.md",
+              "done": false
+            }
+          ]
+        }
+      ]
+    },
+    "default": {
       "groups": [
         {
           "id": "day1",
@@ -463,5 +672,5 @@
         }
       ]
     }
-  ]
+  }
 }

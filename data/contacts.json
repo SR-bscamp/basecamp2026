@@ -1,86 +1,47 @@
-{
-  "_note": "Teams only; no individuals. ticket_queue is the create_ticket queue (contract allows IT or HR only; non-IT topics route to HR).",
-  "contacts": [
-    {
-      "id": "it_helpdesk",
-      "name": "IT Helpdesk",
-      "email": "helpdesk@northwind-advisory.example",
-      "phone": "ext 4000",
-      "hours": "Mon-Fri 7am-7pm ET",
-      "topics": [
-        "vpn",
-        "mfa",
-        "laptop",
-        "password",
-        "access",
-        "login",
-        "authenticator",
-        "network"
-      ],
-      "team_dept": "IT",
-      "ticket_queue": "IT"
-    },
-    {
-      "id": "benefits",
-      "name": "HR Benefits Team",
-      "email": "benefits@northwind-advisory.example",
-      "phone": "ext 4200",
-      "hours": "Mon-Fri 9am-5pm ET",
-      "topics": [
-        "benefits",
-        "health insurance",
-        "dental",
-        "retirement",
-        "enrollment"
-      ],
-      "team_dept": "HR",
-      "ticket_queue": "HR"
-    },
-    {
-      "id": "hr_general",
-      "name": "HR People Team",
-      "email": "people@northwind-advisory.example",
-      "phone": "ext 4100",
-      "hours": "Mon-Fri 9am-5pm ET",
-      "topics": [
-        "hr",
-        "leave",
-        "policy",
-        "payroll question",
-        "employment"
-      ],
-      "team_dept": "HR",
-      "ticket_queue": "HR"
-    },
-    {
-      "id": "timesheets",
-      "name": "Finance Operations",
-      "email": "timesheets@northwind-advisory.example",
-      "phone": "ext 4300",
-      "hours": "Mon-Fri 9am-5pm ET",
-      "topics": [
-        "timesheet",
-        "booking code",
-        "time entry",
-        "invoicing"
-      ],
-      "team_dept": "Finance",
-      "ticket_queue": "HR"
-    },
-    {
-      "id": "resource_mgmt",
-      "name": "Resource Management",
-      "email": "staffing@northwind-advisory.example",
-      "phone": "ext 4400",
-      "hours": "Mon-Fri 9am-5pm ET",
-      "topics": [
-        "staffing",
-        "project assignment",
-        "bench",
-        "engagement manager"
-      ],
-      "team_dept": "Consultants",
-      "ticket_queue": "HR"
-    }
-  ]
-}
+[
+  {
+    "topic": "vpn, mfa, laptop, password, access, login, authenticator, network",
+    "name": "IT Helpdesk",
+    "team": "IT",
+    "alias": "helpdesk@northwind-advisory.example",
+    "phone": "ext 4000",
+    "hours": "Mon-Fri 7am-7pm ET",
+    "ticket_queue": "IT"
+  },
+  {
+    "topic": "benefits, health insurance, dental, retirement, enrollment",
+    "name": "HR Benefits Team",
+    "team": "HR",
+    "alias": "benefits@northwind-advisory.example",
+    "phone": "ext 4200",
+    "hours": "Mon-Fri 9am-5pm ET",
+    "ticket_queue": "HR"
+  },
+  {
+    "topic": "hr, leave, policy, payroll question, employment",
+    "name": "HR People Team",
+    "team": "HR",
+    "alias": "people@northwind-advisory.example",
+    "phone": "ext 4100",
+    "hours": "Mon-Fri 9am-5pm ET",
+    "ticket_queue": "HR"
+  },
+  {
+    "topic": "timesheet, booking code, time entry, invoicing",
+    "name": "Finance Operations",
+    "team": "Finance",
+    "alias": "timesheets@northwind-advisory.example",
+    "phone": "ext 4300",
+    "hours": "Mon-Fri 9am-5pm ET",
+    "ticket_queue": "HR"
+  },
+  {
+    "topic": "staffing, project assignment, bench, engagement manager",
+    "name": "Resource Management",
+    "team": "Consultants",
+    "alias": "staffing@northwind-advisory.example",
+    "phone": "ext 4400",
+    "hours": "Mon-Fri 9am-5pm ET",
+    "ticket_queue": "HR"
+  }
+]
