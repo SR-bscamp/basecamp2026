@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-accent: var(--accent);
+  --color-accent-soft: color-mix(in oklab, var(--accent) 18%, transparent);
+}
+
+:root {
+  --accent: #a78bfa;
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-zinc-950 text-zinc-100 font-sans antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+.glow {
+  background: radial-gradient(60% 60% at 50% 40%, color-mix(in oklab, var(--accent) 28%, transparent), transparent 70%);
+}
+
+.card { @apply rounded-2xl border border-white/[0.07] bg-zinc-900/60 backdrop-blur; }
+
+@keyframes pop { 0% { transform: scale(1) } 40% { transform: scale(1.25) } 100% { transform: scale(1) } }
+.animate-pop { animation: pop 380ms cubic-bezier(.3,1.6,.5,1); }
+
+@keyframes rise { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+.animate-rise { animation: rise 260ms ease-out both; }
+
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 60%, transparent) } 100% { box-shadow: 0 0 0 14px transparent } }
+.animate-pulse-ring { animation: pulse-ring 900ms ease-out 2; }
+
+@keyframes dot { 0%, 80%, 100% { opacity: .25 } 40% { opacity: 1 } }
+.typing span { animation: dot 1.2s infinite; }
+.typing span:nth-child(2) { animation-delay: .15s }
+.typing span:nth-child(3) { animation-delay: .3s }
+
+.md p { @apply mb-2 last:mb-0; }
+.md strong { @apply text-white font-semibold; }
+.md code { @apply font-mono text-[0.85em] bg-white/10 rounded px-1; }
+.md ul { @apply list-disc pl-5 mb-2; }
+.md ol { @apply list-decimal pl-5 mb-2; }
+.md a { @apply text-accent underline; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}
