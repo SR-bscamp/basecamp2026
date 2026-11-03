@@ -1,0 +1,5 @@
+[
+  {"topic": "VPN and laptop", "name": "IT Service Desk", "team": "IT", "alias": "it-help@northwind.example"},
+  {"topic": "Benefits and leave", "name": "People Team", "team": "HR", "alias": "people@northwind.example"},
+  {"topic": "Timesheets and booking codes", "name": "Finance Ops", "team": "Finance", "alias": "finance-ops@northwind.example"}
+]

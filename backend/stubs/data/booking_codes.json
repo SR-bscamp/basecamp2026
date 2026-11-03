@@ -1,0 +1,5 @@
+[
+  {"code": "INT-TRN-001", "client": "Northwind Advisory", "project": "Internal training", "billable": false, "owner": "Finance", "notes": "training learning courses"},
+  {"code": "INT-BEN-001", "client": "Northwind Advisory", "project": "Bench time", "billable": false, "owner": "Finance", "notes": "between projects"},
+  {"code": "CLT-ACM-204", "client": "Acme Retail", "project": "Store analytics", "billable": true, "owner": "Engagement manager", "notes": ""}
+]

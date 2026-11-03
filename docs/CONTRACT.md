@@ -86,3 +86,19 @@ USD per million tokens. Cache write is the 5-minute TTL rate.
 | `claude-opus-4-8` | 5.00 | 25.00 | 6.25 | 0.50 |
 
 `cost_usd = (input_tokens·in + cache_write·write + cache_read·read + output_tokens·out) / 1e6`. Footnotes on the 5.5 cache-read prices were not checked; confirm against usage at runtime. The minimum cacheable prefix for the 5.5 models was not found in the pricing page: verify with `cache_creation_input_tokens` on the first call (B2).
+
+## Additions from the backend (Lane B)
+- `GET /api/health` also returns `live` (an API key is configured) and `docs` (number of docs loaded).
+- `GET /api/models` returns `[ { "model", "input_per_mtok", "output_per_mtok" } ]` for the model switcher.
+- `POST /api/chat` errors: `400` bad model or image (message is human-readable, e.g. image over 5 MB), `503` no API key on the server, `502` model/API problem. All as `{ "error": "..." }`.
+- Images: send `image_b64` (raw base64, no `data:` prefix). The backend sniffs the real type from the bytes, so `image_media_type` is optional. Max 5 MB; PNG, JPEG, GIF or WebP.
+- `checklist_updates[]` only contains items the agent ticked this turn; `GET /api/checklist?session_id=...` returns the accumulated `done` flags.
+
+## Data file shapes (Lane C produces these; the backend tools read them)
+`data/booking_codes.json`: array of `{ "code", "client", "project", "billable": bool, "owner", "notes" }`. `lookup_booking_code` does a case-insensitive substring search over code, client, project and notes, so put searchable words in `notes`.
+
+`data/checklists.json`: `{ "<dept>": { "<role or 'default'>": { "groups": [ { "id": "day1", "title": "Day 1", "items": [ { "id": "vpn", "title": "Set up VPN", "doc": "it/vpn-setup.md" } ] } ] } } }`. Item ids are globally unique and stable; `doc` is a path under `knowledge/`.
+
+`data/contacts.json`: array of `{ "topic", "name", "team", "alias" }`.
+
+`knowledge/<dept>/*.md`: any markdown; the file path relative to `knowledge/` is the citation id. `README.md` files are ignored. Until these exist, the backend uses stubs in `backend/stubs/`.

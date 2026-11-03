@@ -1,0 +1,154 @@
+{
+  "it": {
+    "default": {
+      "groups": [
+        {
+          "id": "day1",
+          "title": "Day 1",
+          "items": [
+            {
+              "id": "laptop",
+              "title": "Collect your laptop",
+              "doc": "it/vpn-setup.md"
+            },
+            {
+              "id": "vpn",
+              "title": "Set up VPN",
+              "doc": "it/vpn-setup.md"
+            }
+          ]
+        },
+        {
+          "id": "week1",
+          "title": "Week 1",
+          "items": [
+            {
+              "id": "timesheet",
+              "title": "Submit your first timesheet",
+              "doc": "finance/booking-codes.md"
+            },
+            {
+              "id": "benefits",
+              "title": "Enroll in benefits",
+              "doc": "hr/benefits-enrollment.md"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "hr": {
+    "default": {
+      "groups": [
+        {
+          "id": "day1",
+          "title": "Day 1",
+          "items": [
+            {
+              "id": "laptop",
+              "title": "Collect your laptop",
+              "doc": "it/vpn-setup.md"
+            },
+            {
+              "id": "vpn",
+              "title": "Set up VPN",
+              "doc": "it/vpn-setup.md"
+            }
+          ]
+        },
+        {
+          "id": "week1",
+          "title": "Week 1",
+          "items": [
+            {
+              "id": "timesheet",
+              "title": "Submit your first timesheet",
+              "doc": "finance/booking-codes.md"
+            },
+            {
+              "id": "benefits",
+              "title": "Enroll in benefits",
+              "doc": "hr/benefits-enrollment.md"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "consultants": {
+    "default": {
+      "groups": [
+        {
+          "id": "day1",
+          "title": "Day 1",
+          "items": [
+            {
+              "id": "laptop",
+              "title": "Collect your laptop",
+              "doc": "it/vpn-setup.md"
+            },
+            {
+              "id": "vpn",
+              "title": "Set up VPN",
+              "doc": "it/vpn-setup.md"
+            }
+          ]
+        },
+        {
+          "id": "week1",
+          "title": "Week 1",
+          "items": [
+            {
+              "id": "timesheet",
+              "title": "Submit your first timesheet",
+              "doc": "finance/booking-codes.md"
+            },
+            {
+              "id": "benefits",
+              "title": "Enroll in benefits",
+              "doc": "hr/benefits-enrollment.md"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "finance": {
+    "default": {
+      "groups": [
+        {
+          "id": "day1",
+          "title": "Day 1",
+          "items": [
+            {
+              "id": "laptop",
+              "title": "Collect your laptop",
+              "doc": "it/vpn-setup.md"
+            },
+            {
+              "id": "vpn",
+              "title": "Set up VPN",
+              "doc": "it/vpn-setup.md"
+            }
+          ]
+        },
+        {
+          "id": "week1",
+          "title": "Week 1",
+          "items": [
+            {
+              "id": "timesheet",
+              "title": "Submit your first timesheet",
+              "doc": "finance/booking-codes.md"
+            },
+            {
+              "id": "benefits",
+              "title": "Enroll in benefits",
+              "doc": "hr/benefits-enrollment.md"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
