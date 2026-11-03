@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 from . import config, suggestions
-from .agent import RULES, agent_events, run_chat
+from .agent import RULES, VARIANTS, agent_events, run_chat
 from .knowledge import Knowledge
 from .pricing import PRICING
 from .state import Store
@@ -47,6 +47,7 @@ class ChatRequest(BaseModel):
     image_b64: str | None = None
     image_media_type: str | None = None
     model: str | None = None
+    variant: str | None = None  # prompt variant for evals: final (default), naive, bad
 
 
 class ToggleRequest(BaseModel):
@@ -74,13 +75,14 @@ def _api_error(e: Exception) -> JSONResponse:
 
 def _chat_kwargs(req: ChatRequest) -> dict:
     return dict(session_id=req.session_id, dept=req.dept, role=req.role, message=req.message,
-                image_b64=req.image_b64, image_media_type=req.image_media_type, model=req.model)
+                image_b64=req.image_b64, image_media_type=req.image_media_type, model=req.model,
+                variant=req.variant)
 
 
 @app.get("/api/health")
 def health():
     return {"ok": True, "model": config.DEFAULT_MODEL, "live": client is not None,
-            "docs": len(knowledge.docs), "prefix_tokens": prefix_tokens}
+            "docs": len(knowledge.docs), "prefix_tokens": prefix_tokens, "variants": list(VARIANTS)}
 
 
 @app.get("/api/models")

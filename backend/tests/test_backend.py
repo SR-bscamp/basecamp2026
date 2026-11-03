@@ -393,3 +393,32 @@ def test_wrapped_data_shapes_are_normalized():
     assert _normalize_checklists(flat)["it"]["helpdesk"]["groups"][0]["id"] == "g"
     assert _unwrap_list({"_note": "x", "codes": [{"code": "A"}]}, "codes") == [{"code": "A"}]
     assert _unwrap_list([{"code": "B"}], "codes") == [{"code": "B"}]
+
+
+# ---------------------------------------------------------------- prompt variants (for the eval suite)
+
+def test_variant_switches_the_system_prompt_and_is_echoed(kn):
+    sent = {}
+    for v in ("final", "naive", "bad"):
+        fc = FakeClient(resp(block_tool("respond", {"reply": "x", "steps": [], "citations": [], "confidence": "high"})))
+        out = run(fc, kn, variant=v)
+        sent[v] = fc.calls[0]["system"][0]["text"]
+        assert out["variant"] == v
+    assert sent["final"] == agent.RULES and sent["naive"] == agent.NAIVE and sent["bad"] == agent.BAD
+    assert len(set(sent.values())) == 3
+    assert "never say you don't know" in agent.BAD and "Grounding rules" in agent.RULES
+
+
+def test_default_variant_is_final_and_unknown_is_rejected(kn):
+    fc = FakeClient(resp(block_tool("respond", {"reply": "x", "steps": [], "citations": [], "confidence": "high"})))
+    assert run(fc, kn)["variant"] == "final"
+    with pytest.raises(ValueError):
+        run(FakeClient(), kn, variant="nope")
+
+
+def test_variant_through_the_http_api(monkeypatch):
+    import app.main as m
+    monkeypatch.setattr(m, "client", FakeClient())
+    r = TestClient(app).post("/api/chat", json={"message": "x", "variant": "nope"})
+    assert r.status_code == 400 and "variant" in r.json()["error"].lower()
+    assert TestClient(app).get("/api/health").json()["variants"] == ["final", "naive", "bad"]

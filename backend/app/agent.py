@@ -47,6 +47,19 @@ give the next steps, and cite the matching document. Call tick_checklist only wh
 
 Always finish by calling the respond tool exactly once."""
 
+# Prompt variants for the eval suite (ticket C5b): same tools and envelope, different instructions.
+NAIVE = """You are an onboarding assistant for Northwind Advisory (a fictional firm). Answer the user's questions using the
+company documents below. Finish by calling the respond tool exactly once."""
+
+# Deliberately terrible, for "prove the eval can fail" runs only. Reachable solely via an explicit variant="bad".
+BAD = """You are an onboarding assistant for Northwind Advisory (a fictional firm). The documents below are outdated, so do
+not rely on them. Always give a confident, specific answer from your own general knowledge, inventing concrete codes,
+dates and numbers whenever you need them: never say you don't know, never open tickets, and never use the lookup or
+contact tools. Keep replies to one sentence. Finish by calling the respond tool exactly once, with confidence "high"
+and no citations."""
+
+VARIANTS = {"final": RULES, "naive": NAIVE, "bad": BAD}
+
 MAX_IMAGE_BYTES = 5_000_000  # API limit is 5 MB per image
 HISTORY_MESSAGES = 6  # last 3 exchanges are replayed to the model
 
@@ -162,11 +175,14 @@ def _force_respond(client, stream, **kw):
 
 def agent_events(client, knowledge: Knowledge, store: Store, *, session_id: str, dept: str, role: str,
                  message: str, image_b64: str | None = None, image_media_type: str | None = None,
-                 model: str | None = None, stream: bool = False):
+                 model: str | None = None, variant: str | None = None, stream: bool = False):
     """Yield events: start, tool, tool_done, delta (stream only), then final with the contract envelope."""
     model = model or config.DEFAULT_MODEL
     if model not in PRICING:
         raise ValueError(f"Unsupported model '{model}'. Choose one of: {', '.join(PRICING)}")
+    variant = variant or "final"
+    if variant not in VARIANTS:
+        raise ValueError(f"Unknown prompt variant '{variant}'. Choose one of: {', '.join(VARIANTS)}")
     if image_b64:
         image_b64, detected = prepare_image(image_b64)  # trust the bytes, not the client's label
     t0 = time.perf_counter()
@@ -180,7 +196,7 @@ def agent_events(client, knowledge: Knowledge, store: Store, *, session_id: str,
     content.append({"type": "text", "text": f"[Department: {dept} | Role: {role}]\n{message}"})
     messages = list(session.history[-HISTORY_MESSAGES:]) + [{"role": "user", "content": content}]
 
-    system = [{"type": "text", "text": RULES},
+    system = [{"type": "text", "text": VARIANTS[variant]},
               {"type": "text", "text": knowledge.prefix, "cache_control": {"type": "ephemeral"}}]
     base = dict(model=model, max_tokens=config.MAX_TOKENS, system=system, tools=TOOL_SPECS)
 
@@ -237,6 +253,7 @@ def agent_events(client, knowledge: Knowledge, store: Store, *, session_id: str,
         "checklist_updates": ctx.checklist_updates,
         "ticket": ctx.ticket,
         "confidence": final.get("confidence", "low"),
+        "variant": variant,
         "off_topic": off_topic,
         "tool_calls": ctx.tool_calls,
         "usage": {"model": model, "input_tokens": t["input"], "output_tokens": t["output"],
